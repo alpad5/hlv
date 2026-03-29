@@ -8,20 +8,29 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 
 ## Running locally
 
-Three processes required:
+Single command to start everything:
 
 ```bash
-# 1. Redis
-redis-server --daemonize yes
-
-# 2. Backend (Rust)
-cd backend && ~/.cargo/bin/cargo run
-
-# 3. Frontend (SvelteKit)
-cd frontend && npm run dev
+./dev.sh
 ```
 
-Frontend: `http://localhost:5173` — Backend: `http://localhost:3000`
+Starts Redis, Rust backend (port 3000), Vite frontend (port 5173), and Cloudflare tunnel. `Ctrl+C` stops all services cleanly.
+
+If processes are left hanging after closing the terminal:
+```bash
+pkill -f "cargo run"; pkill -f "vite"; pkill cloudflared; redis-cli shutdown
+```
+
+Manual start (if needed individually):
+```bash
+redis-server --daemonize yes
+cd backend && ~/.cargo/bin/cargo run
+cd frontend && npm run dev
+cloudflared tunnel --config ~/.cloudflared/config.yml run hlv
+```
+
+**Local:** `http://localhost:5173`
+**External:** `https://hlv.bavardage.org` (via Cloudflare tunnel, requires `cloudflared` running)
 
 ## Backend (Rust + axum)
 
@@ -57,6 +66,7 @@ backend/src/
 **Location privacy — two layers applied at post time:**
 1. Grid snap to ~100m
 2. Gaussian jitter, default sigma = 300m (user-controllable sigma is a planned feature)
+
 Stored coordinates are already fuzzed — raw location is never persisted.
 
 **WebSocket flow:**
@@ -68,18 +78,32 @@ Stored coordinates are already fuzzed — raw location is never persisted.
 
 ```
 frontend/src/
-  lib/api.js              # fetch + WebSocket wrappers
+  lib/api.js              # fetch + WebSocket wrappers (relative URLs, proxied via Vite)
   routes/+page.svelte     # entire UI (single page)
   routes/+layout.js       # SSR disabled (browser-only, needs geolocation)
 ```
 
-Single-page app, SSR off. All state lives in `+page.svelte`. Layout: sidebar (controls + compose) + main feed. Clicking a thread opens it in-place with comment list and reply box.
+Single-page app, SSR off. All state lives in `+page.svelte`. Layout: sidebar (controls + compose) + main feed. Clicking a thread opens it in-place with comment list and reply box. Mobile: sidebar stacks above feed.
+
+Vite proxies `/api/*` → `localhost:3000` and `/ws` → `ws://localhost:3000`, so the frontend uses only relative URLs and a single port.
 
 **Radius slider:** 1–20km in 1km steps, stored client-side, sent to WS on change.
 **Noise slider:** wired up in UI but disabled — backend sigma is hardcoded at 300m until this feature is built out.
 
+## Cloudflare tunnel
+
+Config lives at `~/.cloudflared/config.yml` (not in the repo). Tunnel name: `hlv`, ID: `8d5d283b-16d6-4fa1-9348-be4956d56074`. Routes `hlv.bavardage.org` → `http://127.0.0.1:5173`.
+
+The DNS record is a CNAME pointing to `<tunnel-id>.cfargotunnel.com` — home IP changes don't affect it.
+
+## Branching
+
+Trunk-based: short-lived feature branches merged to `main` via PR. `main` is always the stable state.
+
 ## Planned features
 
 - User-controlled location noise (expose sigma via UI slider → send to backend)
-- Thread expiry countdown that updates in real time
-- PWA icons / installable manifest
+- Live expiry countdown that ticks in real time
+- `thread_expired` WebSocket event to remove dead threads from feed automatically
+- Error states in UI (failed post, network issues)
+- Production deployment
