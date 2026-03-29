@@ -1,5 +1,7 @@
 # Rust
 backend/target/
+**/*.rs.bk
+*.pdb
 
 # Node
 frontend/node_modules/
