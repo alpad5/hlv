@@ -1,0 +1,69 @@
+use axum::{
+    extract::{Query, State},
+    http::StatusCode,
+    Json,
+};
+use std::time::{SystemTime, UNIX_EPOCH};
+use uuid::Uuid;
+
+use crate::{
+    geo::fuzz_coordinates,
+    models::{CreateThread, FeedQuery, Thread},
+    store::{get_feed, save_thread},
+    ws::{broadcast, WsEvent},
+    AppState,
+};
+
+const DEFAULT_NOISE_SIGMA_METERS: f64 = 300.0;
+const MAX_LIFETIME_SECS: i64 = 3600;
+
+pub async fn post_thread(
+    State(state): State<AppState>,
+    Json(body): Json<CreateThread>,
+) -> Result<Json<Thread>, StatusCode> {
+    let now = SystemTime::now()
+        .duration_since(UNIX_EPOCH)
+        .unwrap()
+        .as_secs() as i64;
+
+    let (fuzzed_lat, fuzzed_lng) =
+        fuzz_coordinates(body.lat, body.lng, DEFAULT_NOISE_SIGMA_METERS);
+
+    let thread = Thread {
+        id: Uuid::new_v4().to_string(),
+        content: body.content,
+        lat: fuzzed_lat,
+        lng: fuzzed_lng,
+        created_at: now,
+        expires_at: now + MAX_LIFETIME_SECS,
+        last_activity: now,
+        comment_count: 0,
+    };
+
+    let mut con = state.redis.clone();
+    save_thread(&mut con, &thread)
+        .await
+        .map_err(|_| StatusCode::INTERNAL_SERVER_ERROR)?;
+
+    // Broadcast to nearby connected clients
+    let event = WsEvent::NewThread {
+        data: serde_json::to_value(&thread).unwrap(),
+    };
+    broadcast(&state.clients, thread.lat, thread.lng, event).await;
+
+    Ok(Json(thread))
+}
+
+pub async fn get_feed_handler(
+    State(state): State<AppState>,
+    Query(params): Query<FeedQuery>,
+) -> Result<Json<Vec<Thread>>, StatusCode> {
+    let radius = params.radius_km.clamp(1.0, 20.0);
+    let mut con = state.redis.clone();
+
+    let threads = get_feed(&mut con, params.lat, params.lng, radius)
+        .await
+        .map_err(|_| StatusCode::INTERNAL_SERVER_ERROR)?;
+
+    Ok(Json(threads))
+}
