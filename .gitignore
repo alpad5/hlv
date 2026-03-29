@@ -12,5 +12,8 @@ frontend/build/
 .env
 .env.*
 
+# Redis
+backend/dump.rdb
+
 # OS
 .DS_Store
