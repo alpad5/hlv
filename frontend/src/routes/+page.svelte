@@ -312,9 +312,12 @@
   main {
     flex: 1;
     overflow-y: auto;
+    min-height: 0;
+    display: flex;
+    flex-direction: column;
   }
 
-  .feed { display: flex; flex-direction: column; }
+  .feed { display: flex; flex-direction: column; flex: 1; }
 
   .thread-card {
     border: none;
@@ -352,7 +355,8 @@
   .thread-view {
     display: flex;
     flex-direction: column;
-    height: 100vh;
+    height: 100%;
+    min-height: 0;
   }
 
   .back {
