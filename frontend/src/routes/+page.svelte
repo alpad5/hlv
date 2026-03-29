@@ -12,13 +12,28 @@
   let commentDraft = '';
   let comments = [];
   let posting = false;
+  let locationError = null;
 
   onMount(async () => {
-    navigator.geolocation.getCurrentPosition(async (pos) => {
-      location = { lat: pos.coords.latitude, lng: pos.coords.longitude };
-      threads = await getFeed(location.lat, location.lng, radius);
-      ws = connectWs(location.lat, location.lng, radius, handleWsEvent);
-    });
+    if (!navigator.geolocation) {
+      locationError = 'Geolocation is not supported by this browser.';
+      return;
+    }
+    navigator.geolocation.getCurrentPosition(
+      async (pos) => {
+        location = { lat: pos.coords.latitude, lng: pos.coords.longitude };
+        threads = await getFeed(location.lat, location.lng, radius);
+        ws = connectWs(location.lat, location.lng, radius, handleWsEvent);
+      },
+      (err) => {
+        const messages = {
+          1: 'Location permission denied. Please allow location access in your browser settings.',
+          2: 'Location unavailable. Check your device GPS/location settings.',
+          3: 'Location request timed out. Try refreshing.'
+        };
+        locationError = messages[err.code] ?? `Location error: ${err.message}`;
+      }
+    );
   });
 
   onDestroy(() => ws?.close());
@@ -122,7 +137,9 @@
       </div>
     </div>
 
-    {#if !location}
+    {#if locationError}
+      <p class="status error">{locationError}</p>
+    {:else if !location}
       <p class="status">waiting for location…</p>
     {/if}
   </aside>
@@ -290,6 +307,7 @@
   button:disabled { opacity: 0.3; cursor: not-allowed; }
 
   .status { font-size: 12px; color: #444; }
+  .status.error { color: #c0392b; }
 
   main {
     flex: 1;
