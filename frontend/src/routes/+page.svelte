@@ -181,7 +181,7 @@
         <div class="comment-compose">
           <textarea
             bind:value={commentDraft}
-            placeholder="← respondo aquí"
+            placeholder="        ← respondo aquí"
             rows="2"
             on:keydown={handleCommentKey}
             maxlength="500"
@@ -197,9 +197,6 @@
               <span class="meta">{timeAgo(c.created_at)}</span>
             </div>
           {/each}
-          {#if comments.length === 0}
-            <p class="empty">no replies yet</p>
-          {/if}
         </div>
       </div>
     {:else}
@@ -300,10 +297,10 @@
   textarea {
     background: #111;
     border: 1px solid #222;
-    color: #e0e0e0;
+    color: #7a6218;
     padding: 10px;
     font-family: inherit;
-    font-size: 13px;
+    font-size: inherit;
     resize: none;
     width: 100%;
     outline: none;
@@ -311,8 +308,8 @@
   }
 
   textarea:focus { border-color: #444; }
-  .compose textarea::placeholder { color: #564812; opacity: 1; font-family: 'DM Mono', monospace; font-size: 18px; font-style: italic; }
-  .comment-compose textarea::placeholder { color: #444; opacity: 1; font-style: italic; }
+  .compose textarea::placeholder { color: #564812; opacity: 1; font-family: 'DM Mono', monospace; font-size: 17px; font-style: italic; }
+  .comment-compose textarea::placeholder { color: #564812; opacity: 0.6; font-size: 17px; font-style: italic; }
 
   .compose-footer {
     display: flex;
