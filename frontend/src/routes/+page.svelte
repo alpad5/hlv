@@ -322,9 +322,10 @@
     min-height: 0;
     display: flex;
     flex-direction: column;
+    align-items: flex-start;
   }
 
-  .feed { display: flex; flex-direction: column; flex: 1; }
+  .feed { display: flex; flex-direction: column; flex: 1; width: 100%; }
 
   .thread-card {
     border: none;
@@ -365,6 +366,8 @@
     height: 100%;
     min-height: 0;
     overflow-y: auto;
+    width: 100%;
+    align-items: flex-start;
   }
 
   .back {
@@ -382,6 +385,8 @@
     display: flex;
     flex-direction: column;
     gap: 8px;
+    width: 100%;
+    text-align: left;
   }
 
   .thread-op p { line-height: 1.6; }
@@ -390,6 +395,7 @@
 
   .comment-list {
     padding: 8px 0;
+    width: 100%;
   }
 
   .comment {
