@@ -13,9 +13,6 @@
   let comments = [];
   let posting = false;
   let locationError = null;
-  // Ticks every 10s so expiry-based opacity updates live on screen
-  let now = Date.now();
-  let ticker;
 
   onMount(async () => {
     if (!navigator.geolocation) {
@@ -39,8 +36,7 @@
     );
   });
 
-  onMount(() => { ticker = setInterval(() => { now = Date.now(); }, 10000); });
-  onDestroy(() => { ws?.close(); clearInterval(ticker); });
+  onDestroy(() => { ws?.close(); });
 
   function handleWsEvent(event) {
     if (event.type === 'new_thread') {
@@ -95,26 +91,6 @@
     if (diff < 60) return `${diff}s`;
     if (diff < 3600) return `${Math.floor(diff / 60)}m`;
     return `${Math.floor(diff / 3600)}h`;
-  }
-
-  function expiresIn(thread) {
-    const remaining = thread.expires_at - Math.floor(Date.now() / 1000);
-    if (remaining <= 0) return 'expired';
-    const m = Math.floor(remaining / 60);
-    const s = remaining % 60;
-    return m > 0 ? `${m}m` : `${s}s`;
-  }
-
-  // Returns opacity for a thread card based on how close it is to expiring.
-  // Full opacity above 10 minutes remaining, fades linearly down to 0.3 at death.
-  // Uses `now` so Svelte re-evaluates this reactively every 10 seconds.
-  function threadOpacity(thread) {
-    void now; // reactive dependency
-    const remaining = thread.expires_at - Math.floor(Date.now() / 1000);
-    if (remaining <= 0) return 0.3;
-    const fadeStart = 600; // begin fading at 10 minutes
-    if (remaining >= fadeStart) return 1;
-    return 0.3 + (remaining / fadeStart) * 0.7;
   }
 
   function handleKey(e) {
@@ -176,7 +152,7 @@
         </button>
         <div class="thread-op">
           <p>{activeThread.content}</p>
-          <span class="meta">{timeAgo(activeThread.created_at)} · expires in {expiresIn(activeThread)}</span>
+          <span class="meta">{timeAgo(activeThread.created_at)}</span>
         </div>
         <div class="comment-compose">
           <textarea
@@ -202,12 +178,11 @@
     {:else}
       <div class="feed">
         {#each threads as t (t.id)}
-          <button class="thread-card" on:click={() => openThread(t)} style="opacity: {threadOpacity(t)};">
+          <button class="thread-card" on:click={() => openThread(t)}>
             <p class="thread-content">{t.content}</p>
             <div class="thread-meta">
               <span>{t.comment_count} {t.comment_count === 1 ? 'reply' : 'replies'}</span>
               <span>{timeAgo(t.created_at)}</span>
-              <span class="expires">⏱ {expiresIn(t)}</span>
             </div>
           </button>
         {/each}
@@ -389,8 +364,6 @@
     font-size: 11px;
     color: #555;
   }
-
-  .expires { color: #3a3a3a; }
 
   .thread-view {
     display: flex;
