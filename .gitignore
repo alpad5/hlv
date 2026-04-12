@@ -17,3 +17,6 @@ backend/dump.rdb
 
 # OS
 .DS_Store
+
+# Local session log — not for version control
+HLV-LOG.md

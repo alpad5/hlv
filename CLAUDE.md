@@ -2,6 +2,10 @@
 
 This file provides guidance to Claude Code (claude.ai/code) when working with code in this repository.
 
+## Session log
+
+A running local log is kept in `HLV-LOG.md` (gitignored — never committed). At the end of each session, append a new entry summarising what was achieved, any open issues, and anything worth knowing before the next session. At the start of each session, read `HLV-LOG.md` and present a short recap to the user before doing anything else.
+
 ## What this is
 
 **hlv** — anonymous, ephemeral, location-based messaging. No accounts, no history. Open it, post a message, see what people nearby are saying. Threads die if ignored.
