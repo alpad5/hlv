@@ -131,8 +131,8 @@
       ></textarea>
       <div class="compose-footer">
         <span class="hint">⌘↵ to post</span>
-        <button on:click={submit} disabled={!draft.trim() || posting || !location}>
-          {posting ? '…' : 'post'}
+        <button on:click={submit} disabled={!draft.trim() || posting || !location} aria-label="post">
+          {#if posting}…{:else}<svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><line x1="5" y1="12" x2="19" y2="12"/><polyline points="12 5 19 12 12 19"/></svg>{/if}
         </button>
       </div>
     </div>
@@ -148,7 +148,9 @@
   <main>
     {#if activeThread}
       <div class="thread-view">
-        <button class="back" on:click={() => { activeThread = null; comments = []; }}>← back</button>
+        <button class="back" on:click={() => { activeThread = null; comments = []; }} aria-label="back">
+          <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><line x1="19" y1="12" x2="5" y2="12"/><polyline points="12 19 5 12 12 5"/></svg>
+        </button>
         <div class="thread-op">
           <p>{activeThread.content}</p>
           <span class="meta">{timeAgo(activeThread.created_at)} · expires in {expiresIn(activeThread)}</span>
@@ -172,8 +174,8 @@
             on:keydown={handleCommentKey}
             maxlength="500"
           ></textarea>
-          <button on:click={submitComment} disabled={!commentDraft.trim() || posting}>
-            {posting ? '…' : 'reply'}
+          <button on:click={submitComment} disabled={!commentDraft.trim() || posting} aria-label="reply">
+            {#if posting}…{:else}<svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="9 10 4 15 9 20"/><path d="M20 4v7a4 4 0 0 1-4 4H4"/></svg>{/if}
           </button>
         </div>
       </div>
@@ -298,11 +300,14 @@
     background: none;
     border: 1px solid #333;
     color: #e0e0e0;
-    padding: 6px 14px;
+    padding: 6px 10px;
     font-family: inherit;
     font-size: 13px;
     cursor: pointer;
     text-transform: lowercase;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
   }
 
   button:hover:not(:disabled) { border-color: #888; }
