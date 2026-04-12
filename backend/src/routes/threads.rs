@@ -26,8 +26,12 @@ pub async fn post_thread(
         .unwrap()
         .as_secs() as i64;
 
-    let (fuzzed_lat, fuzzed_lng) =
-        fuzz_coordinates(body.lat, body.lng, DEFAULT_NOISE_SIGMA_METERS);
+    // Use the client-supplied sigma if provided, otherwise fall back to the default.
+    // Clamped to 0–1000m so the client can't request absurd noise levels.
+    let sigma = body.noise_sigma
+        .unwrap_or(DEFAULT_NOISE_SIGMA_METERS)
+        .clamp(0.0, 1000.0);
+    let (fuzzed_lat, fuzzed_lng) = fuzz_coordinates(body.lat, body.lng, sigma);
 
     let thread = Thread {
         id: Uuid::new_v4().to_string(),

@@ -1,8 +1,8 @@
-export async function postThread(content, lat, lng) {
+export async function postThread(content, lat, lng, noise_sigma) {
   const res = await fetch('/api/threads', {
     method: 'POST',
     headers: { 'Content-Type': 'application/json' },
-    body: JSON.stringify({ content, lat, lng })
+    body: JSON.stringify({ content, lat, lng, noise_sigma })
   });
   if (!res.ok) throw new Error('Failed to post');
   return res.json();

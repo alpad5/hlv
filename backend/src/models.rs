@@ -26,6 +26,9 @@ pub struct CreateThread {
     pub content: String,
     pub lat: f64,
     pub lng: f64,
+    // How much Gaussian noise to apply to the post location, in metres.
+    // Optional — defaults to 300m on the backend if not provided.
+    pub noise_sigma: Option<f64>,
 }
 
 // POST /threads/:id/comments
