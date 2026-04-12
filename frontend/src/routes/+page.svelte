@@ -57,7 +57,7 @@
     if (!draft.trim() || !location || posting) return;
     posting = true;
     try {
-      await postThread(draft.trim(), location.lat, location.lng);
+      await postThread(draft.trim(), location.lat, location.lng, noise);
       draft = '';
     } finally {
       posting = false;
@@ -115,8 +115,7 @@
 
       <label class="noise-label">
         <span>noise <strong>{noise}m</strong></span>
-        <input type="range" min="50" max="1000" step="50" bind:value={noise} disabled />
-        <small>location fuzzing — coming soon</small>
+        <input type="range" min="50" max="1000" step="50" bind:value={noise} />
       </label>
     </div>
 
@@ -253,14 +252,6 @@
     width: 100%;
     accent-color: #e0e0e0;
     cursor: pointer;
-  }
-
-  input[type="range"]:disabled { opacity: 0.3; cursor: not-allowed; }
-
-  .noise-label small {
-    font-size: 11px;
-    color: #444;
-    font-style: italic;
   }
 
   .compose {
