@@ -141,12 +141,12 @@
 
     <div class="controls">
       <label>
-        <span>radius <strong>{radius}km</strong></span>
+        <span>radio <strong>{radius}km</strong></span>
         <input type="range" min="1" max="20" step="1" bind:value={radius} on:change={onRadiusChange} />
       </label>
 
       <label class="noise-label">
-        <span>noise <strong>{noise}m</strong></span>
+        <span>precisión <strong>{noise}m</strong></span>
         <input type="range" min="50" max="1000" step="50" bind:value={noise} />
         {#if previewCoords}
           <small class="location-preview">publicando cerca de {previewCoords[0].toFixed(4)}, {previewCoords[1].toFixed(4)}</small>
@@ -481,8 +481,6 @@
       font-size: 28px;
       letter-spacing: 8px;
     }
-
-    .noise-label { display: none; }
 
     .hint { display: none; }
 
