@@ -439,8 +439,9 @@
   }
 
   .comment {
-    padding: 12px 24px;
+    padding: 12px 24px 12px 40px;
     border-bottom: 1px solid #141414;
+    border-left: 2px solid #1e1e1e;
     display: flex;
     flex-direction: column;
     gap: 4px;
