@@ -231,10 +231,11 @@
   }
 
   .brand {
-    font-size: 20px;
-    letter-spacing: 4px;
+    font-size: 40px;
+    letter-spacing: 10px;
     color: #fff;
     text-transform: lowercase;
+    line-height: 1;
   }
 
   .controls {
@@ -435,6 +436,11 @@
       border-bottom: 1px solid #1e1e1e;
       padding: 16px;
       gap: 16px;
+    }
+
+    .brand {
+      font-size: 28px;
+      letter-spacing: 8px;
     }
 
     .noise-label { display: none; }
