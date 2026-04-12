@@ -205,8 +205,8 @@
   :global(body) {
     background: #0a0a0a;
     color: #e0e0e0;
-    font-family: 'Courier New', monospace;
-    font-size: 14px;
+    font-family: 'Outfit', sans-serif;
+    font-size: 22px;
     min-height: 100vh;
   }
 
@@ -322,10 +322,9 @@
     min-height: 0;
     display: flex;
     flex-direction: column;
-    align-items: flex-start;
   }
 
-  .feed { display: flex; flex-direction: column; flex: 1; width: 100%; }
+  .feed { display: flex; flex-direction: column; flex: 1; }
 
   .thread-card {
     border: none;
@@ -336,6 +335,8 @@
     cursor: pointer;
     display: flex;
     flex-direction: column;
+    justify-content: flex-start;
+    align-items: flex-start;
     gap: 8px;
     background: none;
     color: inherit;
@@ -367,7 +368,6 @@
     min-height: 0;
     overflow-y: auto;
     width: 100%;
-    align-items: flex-start;
   }
 
   .back {
