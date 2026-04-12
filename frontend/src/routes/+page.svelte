@@ -155,17 +155,6 @@
           <p>{activeThread.content}</p>
           <span class="meta">{timeAgo(activeThread.created_at)} · expires in {expiresIn(activeThread)}</span>
         </div>
-        <div class="comment-list">
-          {#each comments as c}
-            <div class="comment">
-              <p>{c.content}</p>
-              <span class="meta">{timeAgo(c.created_at)}</span>
-            </div>
-          {/each}
-          {#if comments.length === 0}
-            <p class="empty">no replies yet</p>
-          {/if}
-        </div>
         <div class="comment-compose">
           <textarea
             bind:value={commentDraft}
@@ -177,6 +166,17 @@
           <button on:click={submitComment} disabled={!commentDraft.trim() || posting} aria-label="reply">
             {#if posting}…{:else}<svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="9 10 4 15 9 20"/><path d="M20 4v7a4 4 0 0 1-4 4H4"/></svg>{/if}
           </button>
+        </div>
+        <div class="comment-list">
+          {#each comments as c}
+            <div class="comment">
+              <p>{c.content}</p>
+              <span class="meta">{timeAgo(c.created_at)}</span>
+            </div>
+          {/each}
+          {#if comments.length === 0}
+            <p class="empty">no replies yet</p>
+          {/if}
         </div>
       </div>
     {:else}
@@ -364,6 +364,7 @@
     flex-direction: column;
     height: 100%;
     min-height: 0;
+    overflow-y: auto;
   }
 
   .back {
@@ -388,8 +389,6 @@
   .meta { font-size: 11px; color: #555; }
 
   .comment-list {
-    flex: 1;
-    overflow-y: auto;
     padding: 8px 0;
   }
 
@@ -405,6 +404,7 @@
 
   .comment-compose {
     border-top: 1px solid #1e1e1e;
+    border-bottom: 1px solid #1e1e1e;
     padding: 12px 24px;
     display: flex;
     gap: 8px;
