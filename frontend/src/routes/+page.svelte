@@ -205,7 +205,7 @@
   :global(body) {
     background: #0a0a0a;
     color: #e0e0e0;
-    font-family: 'Outfit', sans-serif;
+    font-family: 'DM Mono', monospace;
     font-size: 22px;
     min-height: 100vh;
   }
