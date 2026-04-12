@@ -149,7 +149,7 @@
         <span>noise <strong>{noise}m</strong></span>
         <input type="range" min="50" max="1000" step="50" bind:value={noise} />
         {#if previewCoords}
-          <small class="location-preview">publicado cerca de {previewCoords[0].toFixed(4)}, {previewCoords[1].toFixed(4)}</small>
+          <small class="location-preview">publicando cerca de {previewCoords[0].toFixed(4)}, {previewCoords[1].toFixed(4)}</small>
         {/if}
       </label>
     </div>
