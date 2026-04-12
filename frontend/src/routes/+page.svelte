@@ -93,6 +93,38 @@
     return `${Math.floor(diff / 3600)}h`;
   }
 
+  // --- Location preview ---
+  // Mirrors the two-layer fuzzing the backend applies at post time
+  // (grid snap + Gaussian jitter), so the user can see roughly where
+  // their message will appear — not their exact location.
+
+  const GRID_METERS = 100;
+  const METERS_PER_DEG_LAT = 111_320;
+
+  // Box-Muller transform: converts two uniform random numbers into one
+  // Gaussian-distributed value with mean 0 and standard deviation 1.
+  function gaussianRandom() {
+    let u, v;
+    do { u = Math.random(); } while (u === 0);
+    do { v = Math.random(); } while (v === 0);
+    return Math.sqrt(-2 * Math.log(u)) * Math.cos(2 * Math.PI * v);
+  }
+
+  // Replicate the backend fuzz: snap to ~100m grid, then add Gaussian jitter.
+  // Returns [lat, lng] of the approximate posted location.
+  function computeFuzzPreview(lat, lng, sigma) {
+    const gridLat = GRID_METERS / METERS_PER_DEG_LAT;
+    const gridLng = GRID_METERS / (METERS_PER_DEG_LAT * Math.cos(lat * Math.PI / 180));
+    const snappedLat = Math.round(lat / gridLat) * gridLat;
+    const snappedLng = Math.round(lng / gridLng) * gridLng;
+    const jitterLat = gaussianRandom() * sigma / METERS_PER_DEG_LAT;
+    const jitterLng = gaussianRandom() * sigma / (METERS_PER_DEG_LAT * Math.cos(snappedLat * Math.PI / 180));
+    return [snappedLat + jitterLat, snappedLng + jitterLng];
+  }
+
+  // Recomputes whenever the noise slider or location changes, giving a live preview.
+  $: previewCoords = location ? computeFuzzPreview(location.lat, location.lng, noise) : null;
+
   function handleKey(e) {
     if (e.key === 'Enter' && (e.metaKey || e.ctrlKey)) submit();
   }
@@ -116,6 +148,9 @@
       <label class="noise-label">
         <span>noise <strong>{noise}m</strong></span>
         <input type="range" min="50" max="1000" step="50" bind:value={noise} />
+        {#if previewCoords}
+          <small class="location-preview">publicado cerca de {previewCoords[0].toFixed(4)}, {previewCoords[1].toFixed(4)}</small>
+        {/if}
       </label>
     </div>
 
@@ -180,7 +215,7 @@
           <button class="thread-card" on:click={() => openThread(t)}>
             <p class="thread-content">{t.content}</p>
             <div class="thread-meta">
-              <span>{t.comment_count} {t.comment_count === 1 ? 'reply' : 'replies'}</span>
+              <span>{t.comment_count} {t.comment_count === 1 ? 'respuesta' : 'respuestas'}</span>
               <span>{timeAgo(t.created_at)}</span>
             </div>
           </button>
@@ -252,6 +287,13 @@
     width: 100%;
     accent-color: #e0e0e0;
     cursor: pointer;
+  }
+
+  .location-preview {
+    font-size: 11px;
+    color: #444;
+    font-style: italic;
+    line-height: 1.4;
   }
 
   .compose {
