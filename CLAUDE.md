@@ -100,6 +100,18 @@ The DNS record is a CNAME pointing to `<tunnel-id>.cfargotunnel.com` — home IP
 
 Trunk-based: short-lived feature branches merged to `main` via PR. `main` is always the stable state.
 
+**Every code change must start on a new branch — never commit directly to `main`.** Before touching any file, create a branch. Branch names follow the pattern `type/short-title`, where type is one of `feature`, `fix`, `refactor`, or `chore`. The title should be concise and reflect what is being changed (e.g. `feature/icons`, `fix/mobile-overflow`, `refactor/feed-layout`). When in doubt about the right name, use the gist of the user's request to derive it.
+
+## Code comments
+
+All code, especially backend code, should be commented at two levels:
+
+1. **Plain-English summaries on key sections** — written so that a non-technical person can follow what the code is doing and why. These sit above meaningful blocks (a function, a query, a data transformation) and describe the intent in simple terms, not implementation details. Example: *"Look up this thread in the database and reset its expiry timer, since someone just replied to it."*
+
+2. **Standard inline comments** — the usual good-practice notes explaining non-obvious logic, edge cases, magic numbers, or anything a programmer would need to maintain the code safely.
+
+When adding new code or modifying existing code, both levels should be present where appropriate.
+
 ## Planned features
 
 - User-controlled location noise (expose sigma via UI slider → send to backend)
