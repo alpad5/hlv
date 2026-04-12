@@ -3,7 +3,7 @@ use redis::{aio::ConnectionManager, AsyncCommands, Script};
 use std::time::{SystemTime, UNIX_EPOCH};
 
 const GEO_KEY: &str = "feed:geo";
-const INACTIVITY_TTL_SECS: i64 = 15 * 60; // 15 minutes
+const INACTIVITY_TTL_SECS: i64 = 30 * 60; // 30 minutes
 const MAX_LIFETIME_SECS: i64 = 60 * 60;   // 1 hour hard cap
 
 fn now() -> i64 {
