@@ -114,6 +114,8 @@ When adding new code or modifying existing code, both levels should be present w
 
 ## Planned features
 
+- Typography: reconsider font choice — current is DM Mono (monospace, fits the anonymous/terminal feel). Outfit was a strong proportional candidate worth revisiting if the app's personality shifts toward something warmer or more accessible.
+
 - User-controlled location noise (expose sigma via UI slider → send to backend)
 - Live expiry countdown that ticks in real time
 - `thread_expired` WebSocket event to remove dead threads from feed automatically
