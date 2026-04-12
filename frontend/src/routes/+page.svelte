@@ -132,7 +132,7 @@
       <div class="compose-footer">
         <span class="hint">⌘↵ to post</span>
         <button on:click={submit} disabled={!draft.trim() || posting || !location} aria-label="post">
-          {#if posting}…{:else}<svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><line x1="5" y1="12" x2="19" y2="12"/><polyline points="12 5 19 12 12 19"/></svg>{/if}
+          {#if posting}…{:else}<svg xmlns="http://www.w3.org/2000/svg" width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><line x1="2" y1="12" x2="19" y2="12"/><polyline points="12 5 19 12 12 19"/></svg>{/if}
         </button>
       </div>
     </div>
@@ -149,7 +149,7 @@
     {#if activeThread}
       <div class="thread-view">
         <button class="back" on:click={() => { activeThread = null; comments = []; }} aria-label="back">
-          <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><line x1="19" y1="12" x2="5" y2="12"/><polyline points="12 19 5 12 12 5"/></svg>
+          <svg xmlns="http://www.w3.org/2000/svg" width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><line x1="22" y1="12" x2="5" y2="12"/><polyline points="12 19 5 12 12 5"/></svg>
         </button>
         <div class="thread-op">
           <p>{activeThread.content}</p>
@@ -164,7 +164,7 @@
             maxlength="500"
           ></textarea>
           <button on:click={submitComment} disabled={!commentDraft.trim() || posting} aria-label="reply">
-            {#if posting}…{:else}<svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="9 10 4 15 9 20"/><path d="M20 4v7a4 4 0 0 1-4 4H4"/></svg>{/if}
+            {#if posting}…{:else}<svg xmlns="http://www.w3.org/2000/svg" width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="9 10 4 15 9 20"/><path d="M20 2v9a4 4 0 0 1-4 4H2"/></svg>{/if}
           </button>
         </div>
         <div class="comment-list">
@@ -314,6 +314,9 @@
   button:hover:not(:disabled) { border-color: #888; }
   button:disabled { opacity: 0.3; cursor: not-allowed; }
 
+  button { color: #666; }
+  button:hover:not(:disabled) { color: #aaa; }
+
   .status { font-size: 12px; color: #444; }
   .status.error { color: #c0392b; }
 
@@ -372,12 +375,15 @@
   }
 
   .back {
-    border: none;
-    border-bottom: 1px solid #1a1a1a;
-    padding: 14px 24px;
+    border: 1px solid #1e1e1e;
+    border-radius: 8px;
+    margin: 12px 16px;
+    width: calc(100% - 32px);
+    padding: 8px 20px;
     text-align: left;
     color: #666;
     font-size: 12px;
+    justify-content: flex-start;
   }
 
   .thread-op {
