@@ -181,7 +181,7 @@
         <div class="comment-compose">
           <textarea
             bind:value={commentDraft}
-            placeholder="reply…"
+            placeholder="← respondo aquí"
             rows="2"
             on:keydown={handleCommentKey}
             maxlength="500"
@@ -311,7 +311,8 @@
   }
 
   textarea:focus { border-color: #444; }
-  textarea::placeholder { color: #564812; opacity: 1; font-family: 'DM Mono', monospace; font-size: 18px; font-style: italic; }
+  .compose textarea::placeholder { color: #564812; opacity: 1; font-family: 'DM Mono', monospace; font-size: 18px; font-style: italic; }
+  .comment-compose textarea::placeholder { color: #444; opacity: 1; font-style: italic; }
 
   .compose-footer {
     display: flex;
