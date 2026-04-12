@@ -199,6 +199,7 @@
 
 <style>
   :global(*, *::before, *::after) { box-sizing: border-box; margin: 0; padding: 0; }
+  :global(html, body) { overflow-x: hidden; }
   :global(body) {
     background: #0a0a0a;
     color: #e0e0e0;
@@ -210,6 +211,7 @@
   .app {
     display: flex;
     min-height: 100vh;
+    width: 100%;
   }
 
   aside {
@@ -412,12 +414,27 @@
   /* Mobile */
   @media (max-width: 640px) {
     .app { flex-direction: column; }
+
     aside {
       width: 100%;
+      min-width: 0;
       height: auto;
       position: static;
       border-right: none;
       border-bottom: 1px solid #1e1e1e;
+      padding: 16px;
+      gap: 16px;
+    }
+
+    .noise-label { display: none; }
+
+    .hint { display: none; }
+
+    .compose-footer { justify-content: flex-end; }
+
+    main {
+      flex: 1;
+      min-height: 50vh;
     }
   }
 </style>
