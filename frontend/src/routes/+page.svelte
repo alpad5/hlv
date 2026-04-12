@@ -328,12 +328,12 @@
     flex-direction: column;
   }
 
-  .feed { display: flex; flex-direction: column; flex: 1; }
+  .feed { display: flex; flex-direction: column; flex: 1; padding: 8px 12px; gap: 8px; }
 
   .thread-card {
-    border: none;
-    border-bottom: 1px solid #1a1a1a;
-    padding: 16px 24px;
+    border: 1px solid #222;
+    border-radius: 10px;
+    padding: 16px 20px;
     text-align: left;
     width: 100%;
     cursor: pointer;
@@ -346,9 +346,14 @@
     color: inherit;
     font-family: inherit;
     font-size: inherit;
+    transition: transform 0.15s ease, border-color 0.15s ease, background 0.15s ease;
   }
 
-  .thread-card:hover { background: #0f0f0f; border-color: #252525; }
+  .thread-card:hover {
+    background: #0f0f0f;
+    border-color: #444;
+    transform: scale(1.012);
+  }
 
   .thread-content {
     line-height: 1.5;
