@@ -41,8 +41,15 @@
   function handleWsEvent(event) {
     if (event.type === 'new_thread') {
       threads = [event.data, ...threads];
-    } else if (event.type === 'new_comment' && activeThread?.id === event.thread_id) {
-      comments = [...comments, event.data];
+    } else if (event.type === 'new_comment') {
+      // Update the reply count on the thread card in the feed list
+      threads = threads.map(t =>
+        t.id === event.thread_id ? { ...t, comment_count: t.comment_count + 1 } : t
+      );
+      // Also append the comment if this thread is currently open
+      if (activeThread?.id === event.thread_id) {
+        comments = [...comments, event.data];
+      }
     }
   }
 
@@ -124,7 +131,7 @@
     <div class="compose">
       <textarea
         bind:value={draft}
-        placeholder="what's happening here?"
+        placeholder="¿qué se dice?"
         rows="4"
         on:keydown={handleKey}
         maxlength="500"
@@ -288,6 +295,7 @@
   }
 
   textarea:focus { border-color: #444; }
+  textarea::placeholder { color: #564812; opacity: 1; font-family: 'DM Mono', monospace; font-size: 18px; font-style: italic; }
 
   .compose-footer {
     display: flex;
