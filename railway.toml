@@ -1,0 +1,4 @@
+[build]
+# Build the Rust backend from the Dockerfile in the backend/ subdirectory.
+# The build context is the repo root so the Dockerfile can COPY backend/ correctly.
+dockerfilePath = "backend/Dockerfile"
