@@ -14,6 +14,24 @@
   let posting = false;
   let locationError = null;
 
+  // Incremented every 30s so that decay bar widths re-evaluate reactively.
+  let tick = 0;
+  let tickInterval;
+
+  // Mirror of the backend's inactivity window (30 min). A thread's effective
+  // expiry is the sooner of its hard cap or last_activity + this value.
+  const INACTIVITY_TTL = 30 * 60;
+
+  // Returns a value in [0, 1] representing how much life this thread has left.
+  // 1 = just posted or just replied to; 0 = about to expire.
+  // _tick is only here to make Svelte re-run this whenever the clock advances.
+  function decayFraction(thread, _tick) {
+    const now = Date.now() / 1000;
+    const effectiveExpiry = Math.min(thread.expires_at, thread.last_activity + INACTIVITY_TTL);
+    const remaining = effectiveExpiry - now;
+    return Math.max(0, Math.min(1, remaining / INACTIVITY_TTL));
+  }
+
   onMount(async () => {
     if (!navigator.geolocation) {
       locationError = 'Geolocation is not supported by this browser.';
@@ -24,6 +42,8 @@
         location = { lat: pos.coords.latitude, lng: pos.coords.longitude };
         threads = await getFeed(location.lat, location.lng, radius);
         ws = connectWs(location.lat, location.lng, radius, handleWsEvent);
+        // Tick every 30s to keep decay bars draining in real time.
+        tickInterval = setInterval(() => { tick++; }, 30_000);
       },
       (err) => {
         const messages = {
@@ -36,15 +56,17 @@
     );
   });
 
-  onDestroy(() => { ws?.close(); });
+  onDestroy(() => { ws?.close(); clearInterval(tickInterval); });
 
   function handleWsEvent(event) {
     if (event.type === 'new_thread') {
       threads = [event.data, ...threads];
     } else if (event.type === 'new_comment') {
-      // Update the reply count on the thread card in the feed list
+      // Update reply count and reset last_activity so the decay bar refills.
       threads = threads.map(t =>
-        t.id === event.thread_id ? { ...t, comment_count: t.comment_count + 1 } : t
+        t.id === event.thread_id
+          ? { ...t, comment_count: t.comment_count + 1, last_activity: Math.floor(Date.now() / 1000) }
+          : t
       );
       // Also append the comment if this thread is currently open
       if (activeThread?.id === event.thread_id) {
@@ -218,6 +240,8 @@
               <span>{t.comment_count} {t.comment_count === 1 ? 'respuesta' : 'respuestas'}</span>
               <span>{timeAgo(t.created_at)}</span>
             </div>
+            <!-- Decay bar: drains as the thread approaches expiry, refills on reply -->
+            <div class="expiry-bar" style="width: {decayFraction(t, tick) * 100}%"></div>
           </button>
         {/each}
         {#if threads.length === 0 && location}
@@ -377,6 +401,21 @@
     font-family: inherit;
     font-size: inherit;
     transition: transform 0.15s ease, border-color 0.15s ease, background 0.15s ease;
+    /* Needed so the decay bar clips to the card's rounded corners */
+    position: relative;
+    overflow: hidden;
+  }
+
+  /* Thin mustard line that drains left-to-right as the thread approaches expiry.
+     Sits flush against the bottom edge of the card, outside the normal flow. */
+  .expiry-bar {
+    position: absolute;
+    bottom: 0;
+    left: 0;
+    height: 3px;
+    background: #9a7f28;
+    transition: width 1s ease;
+    border-radius: 0 0 0 10px;
   }
 
   .thread-card:hover {
