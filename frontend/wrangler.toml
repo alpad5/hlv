@@ -1,0 +1,10 @@
+# Cloudflare Pages configuration for the hlv frontend.
+# Deploy with: npx wrangler pages deploy build
+# Or connect this repo in the Cloudflare Pages dashboard (build command: npm run build, output: build).
+
+name = "hlv"
+pages_build_output_dir = "build"
+
+[vars]
+# Set VITE_API_BASE in the Cloudflare Pages dashboard under Settings → Environment Variables.
+# Value: https://backend-production-fa211.up.railway.app
