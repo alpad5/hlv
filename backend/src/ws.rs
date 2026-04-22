@@ -113,7 +113,7 @@ async fn run_receiver(
         let Ok(msg) = result else { break };
         if let Message::Text(text) = msg {
             if let Ok(update) = serde_json::from_str::<LocationUpdate>(&text) {
-                let radius = update.radius_km.clamp(1.0, 20.0);
+                let radius = update.radius_km.clamp(1.0, 10.0);
                 if let Some(client) = clients.write().await.get_mut(&id) {
                     client.lat = update.lat;
                     client.lng = update.lng;

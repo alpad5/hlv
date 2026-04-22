@@ -142,6 +142,7 @@ When adding new code or modifying existing code, both levels should be present w
 
 - Typography: reconsider font choice — current is DM Mono (monospace, fits the anonymous/terminal feel). Outfit was a strong proportional candidate worth revisiting if the app's personality shifts toward something warmer or more accessible.
 
+- Radius slider lower limit: consider dropping minimum from 1km → 0.5km for dense areas (0.5km steps). Tradeoff: the 300m Gaussian jitter means ~30% of posts from your immediate vicinity fall outside a 0.5km radius — users might see an empty feed in a crowded spot. Needs thought or a reduced sigma at small radii.
 - User-controlled location noise (expose sigma via UI slider → send to backend)
 - Live expiry countdown that ticks in real time
 - `thread_expired` WebSocket event to remove dead threads from feed automatically
