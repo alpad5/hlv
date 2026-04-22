@@ -10,6 +10,18 @@ A running local log is kept in `HLV-LOG.md` (gitignored — never committed). At
 
 **hlv** — anonymous, ephemeral, location-based messaging. No accounts, no history. Open it, post a message, see what people nearby are saying. Threads die if ignored.
 
+## Deploying to production
+
+**Frontend** (Cloudflare Pages → `demo.bavardage.org`):
+```bash
+cd frontend
+VITE_API_BASE=https://backend-production-fa211.up.railway.app npm run build
+npx wrangler pages deploy build --project-name hlv --commit-dirty=true
+```
+Run this after merging to `main` whenever you want changes live.
+
+**Backend** (Railway) — deploys automatically on push to `main`. No manual step needed.
+
 ## Running locally
 
 Single command to start everything:
@@ -99,6 +111,16 @@ Vite proxies `/api/*` → `localhost:3000` and `/ws` → `ws://localhost:3000`, 
 Config lives at `~/.cloudflared/config.yml` (not in the repo). Tunnel name: `hlv`, ID: `8d5d283b-16d6-4fa1-9348-be4956d56074`. Routes `hlv.bavardage.org` → `http://127.0.0.1:5173`.
 
 The DNS record is a CNAME pointing to `<tunnel-id>.cfargotunnel.com` — home IP changes don't affect it.
+
+## Debugging and diagnosis
+
+Before trying a fix, map the problem space first. Touch a couple of plausible culprits — check evidence for each — before committing to a solution. One wrong guess wastes less time than six sequential wrong guesses.
+
+A useful starting sequence for any production issue:
+1. Confirm what's actually broken (HTTP status, response body, headers) — don't assume
+2. Identify the layers that could be responsible (code, CDN cache, DNS, infrastructure, deployment state)
+3. Spot where the layers diverge (e.g. preview URL works but custom domain doesn't → deployment is fine, routing/cache layer is the culprit)
+4. Then fix
 
 ## Branching
 
