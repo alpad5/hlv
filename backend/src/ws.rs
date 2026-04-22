@@ -27,6 +27,9 @@ pub type ClientMap = Arc<RwLock<HashMap<Uuid, WsClient>>>;
 pub enum WsEvent {
     NewThread { data: serde_json::Value },
     NewComment { thread_id: String, data: serde_json::Value },
+    // Sent when a thread's Redis key expires so clients can remove it from
+    // their feed without waiting for a refresh.
+    ThreadExpired { thread_id: String },
 }
 
 /// Inbound message from client to register/update location.
@@ -48,6 +51,20 @@ pub async fn broadcast(clients: &ClientMap, thread_lat: f64, thread_lng: f64, ev
         if haversine_km(thread_lat, thread_lng, client.lat, client.lng) <= client.radius_km {
             let _ = client.tx.send(json.clone());
         }
+    }
+}
+
+/// Broadcast an event to every connected client regardless of location.
+/// Used for thread_expired: any client could have the thread in their feed,
+/// and a client that doesn't will simply no-op the filter on their end.
+pub async fn broadcast_all(clients: &ClientMap, event: WsEvent) {
+    let json = match serde_json::to_string(&event) {
+        Ok(s) => s,
+        Err(_) => return,
+    };
+    let map = clients.read().await;
+    for client in map.values() {
+        let _ = client.tx.send(json.clone());
     }
 }
 

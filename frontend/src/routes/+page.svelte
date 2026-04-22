@@ -91,6 +91,14 @@
       if (activeThread?.id === event.thread_id) {
         comments = [...comments, event.data];
       }
+    } else if (event.type === 'thread_expired') {
+      // Remove the expired thread from the feed. If it's currently open,
+      // drop back to the feed — the thread is gone and there's nothing to show.
+      threads = threads.filter(t => t.id !== event.thread_id);
+      if (activeThread?.id === event.thread_id) {
+        activeThread = null;
+        comments = [];
+      }
     }
   }
 
