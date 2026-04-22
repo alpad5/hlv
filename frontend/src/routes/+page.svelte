@@ -13,6 +13,7 @@
   let comments = [];
   let posting = false;
   let locationError = null;
+  let retrying = false;
 
   // Incremented every 30s so that decay bar widths re-evaluate reactively.
   let tick = 0;
@@ -35,16 +36,32 @@
   // Asks the browser for the user's location and initialises the feed and
   // WebSocket connection once granted. Safe to call more than once — e.g.
   // when the user taps the retry button after an initial denial.
-  function requestLocation() {
+  async function requestLocation() {
     locationError = null;
+    retrying = true;
+
+    // If the browser has permanently blocked location (not just dismissed the
+    // prompt), getCurrentPosition would fire the error callback immediately
+    // with no visible prompt. Detect that early and show actionable copy instead.
+    if (navigator.permissions) {
+      const perm = await navigator.permissions.query({ name: 'geolocation' });
+      if (perm.state === 'denied') {
+        retrying = false;
+        locationError = 'El acceso a la ubicación está bloqueado en tu navegador. Para continuar, restablece el permiso de ubicación en la configuración del sitio e intenta de nuevo.';
+        return;
+      }
+    }
+
     navigator.geolocation.getCurrentPosition(
       async (pos) => {
+        retrying = false;
         location = { lat: pos.coords.latitude, lng: pos.coords.longitude };
         threads = await getFeed(location.lat, location.lng, radius);
         ws = connectWs(location.lat, location.lng, radius, handleWsEvent);
         tickInterval = setInterval(() => { tick++; }, 30_000);
       },
       () => {
+        retrying = false;
         locationError = 'Suena horrible, pero necesitamos que permitas que el servicio obtenga tu ubicación a través del navegador. Esta ubicación no será almacenada ni asociada a ti de ninguna forma.';
       }
     );
@@ -198,7 +215,9 @@
     {#if locationError}
       <div class="location-error">
         <p class="status error">{locationError}</p>
-        <button class="retry-btn" on:click={requestLocation}>intentar de nuevo</button>
+        <button class="retry-btn" on:click={requestLocation} disabled={retrying}>
+          {retrying ? '…' : 'intentar de nuevo'}
+        </button>
       </div>
     {:else if !location}
       <p class="status">waiting for location…</p>
