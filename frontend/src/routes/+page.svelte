@@ -270,7 +270,7 @@
           </button>
         {/each}
         {#if threads.length === 0 && location}
-          <p class="empty">nothing nearby. be the first.</p>
+          <p class="empty">nada por aquí. sé el primero.</p>
         {/if}
       </div>
     {/if}
