@@ -160,7 +160,7 @@
   <!-- Sidebar / controls + compose -->
   <aside>
     <div class="brand">hlv</div>
-    <a href="/blog" class="blog-link">— blog</a>
+    <a href="/blog" class="blog-link" target="_blank" rel="noopener noreferrer">— blog</a>
 
     <div class="controls">
       <label>
