@@ -192,7 +192,7 @@
     <div class="controls">
       <label>
         <span>radio <strong>{radius}km</strong></span>
-        <input type="range" min="1" max="20" step="1" bind:value={radius} on:change={onRadiusChange} />
+        <input type="range" min="1" max="10" step="1" bind:value={radius} on:change={onRadiusChange} />
       </label>
 
       <label class="noise-label">
