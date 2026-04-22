@@ -8,12 +8,15 @@
 </script>
 
 <svelte:head>
-  <title>hlv — blog</title>
+  <title>hlv: hablan los vecinos — blog</title>
 </svelte:head>
 
 <div class="blog">
   <nav>
-    <a href="/" class="brand">hlv</a>
+    <div class="brand-group">
+      <a href="/" class="brand">hlv</a>
+      <span class="tagline">hablan los vecinos</span>
+    </div>
     <span class="sep">/</span>
     <span class="crumb">blog</span>
   </nav>
@@ -59,6 +62,12 @@
     margin-bottom: 56px;
   }
 
+  .brand-group {
+    display: flex;
+    flex-direction: column;
+    gap: 4px;
+  }
+
   .brand {
     font-size: 40px;
     letter-spacing: 10px;
@@ -68,6 +77,13 @@
   }
 
   .brand:hover { color: #aaa; }
+
+  .tagline {
+    font-size: 11px;
+    color: #444;
+    letter-spacing: 2px;
+    text-transform: lowercase;
+  }
 
   .sep {
     font-size: 20px;
