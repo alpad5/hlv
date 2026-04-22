@@ -35,6 +35,31 @@ async fn main() {
         clients: Arc::new(RwLock::new(HashMap::new())),
     };
 
+    // Background task: every 30 seconds, scan the geo index for thread keys
+    // that Redis has expired, clean them up, and push thread_expired events
+    // so connected clients remove stale threads without needing a refresh.
+    let sweep_state = state.clone();
+    tokio::spawn(async move {
+        let mut interval = tokio::time::interval(std::time::Duration::from_secs(30));
+        interval.set_missed_tick_behavior(tokio::time::MissedTickBehavior::Delay);
+        loop {
+            interval.tick().await;
+            let mut con = sweep_state.redis.clone();
+            match store::sweep_expired_threads(&mut con).await {
+                Ok(expired) => {
+                    for thread_id in expired {
+                        ws::broadcast_all(
+                            &sweep_state.clients,
+                            ws::WsEvent::ThreadExpired { thread_id },
+                        )
+                        .await;
+                    }
+                }
+                Err(e) => tracing::warn!("sweep_expired_threads error: {e}"),
+            }
+        }
+    });
+
     let app = Router::new()
         .route("/threads", post(routes::threads::post_thread))
         .route("/feed", get(routes::threads::get_feed_handler))

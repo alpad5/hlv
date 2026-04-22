@@ -153,6 +153,28 @@ pub async fn get_feed(
     Ok(threads)
 }
 
+/// Scans the geo index for thread IDs whose Redis key has already expired,
+/// removes them from the index, and returns the list of expired IDs so the
+/// caller can broadcast a thread_expired event to connected clients.
+pub async fn sweep_expired_threads(
+    con: &mut ConnectionManager,
+) -> redis::RedisResult<Vec<String>> {
+    // Get every member currently in the geo index (the set never auto-expires).
+    let ids: Vec<String> = con.zrange(GEO_KEY, 0isize, -1isize).await?;
+
+    let mut expired = Vec::new();
+    for id in ids {
+        let key = format!("thread:{id}");
+        let exists: bool = con.exists(&key).await?;
+        if !exists {
+            // Thread key is gone — remove the stale geo entry and note the ID.
+            let _: () = con.zrem(GEO_KEY, &id).await?;
+            expired.push(id);
+        }
+    }
+    Ok(expired)
+}
+
 fn parse_thread_fields(fields: &[String]) -> Option<Thread> {
     let mut map = std::collections::HashMap::new();
     let mut iter = fields.iter();
