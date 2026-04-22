@@ -142,6 +142,22 @@
     return `${Math.floor(diff / 3600)}h`;
   }
 
+  // Returns true when fewer than 5 minutes remain on a thread's life.
+  // _tick is a reactive dependency so this re-evaluates every 30s.
+  function isNearExpiry(thread, _tick) {
+    const now = Date.now() / 1000;
+    const effectiveExpiry = Math.min(thread.expires_at, thread.last_activity + INACTIVITY_TTL);
+    return (effectiveExpiry - now) < 5 * 60;
+  }
+
+  // Derives a stable phase offset from the thread ID so each card's
+  // pulse is staggered rather than all blinking in sync.
+  function pulseDelay(id) {
+    let h = 0;
+    for (const c of id) h = (h * 31 + c.charCodeAt(0)) & 0xffff;
+    return -(h % 20);
+  }
+
   // --- Location preview ---
   // Mirrors the two-layer fuzzing the backend applies at post time
   // (grid snap + Gaussian jitter), so the user can see roughly where
@@ -275,6 +291,12 @@
             </div>
             <!-- Decay bar: drains as the thread approaches expiry, refills on reply -->
             <div class="expiry-bar" style="width: {decayFraction(t, tick) * 100}%"></div>
+            <!-- Pulse light: dormant square that wakes up in the last 5 minutes -->
+            <div
+              class="expiry-pulse"
+              class:active={isNearExpiry(t, tick)}
+              style="animation-delay: {pulseDelay(t.id)}s"
+            ></div>
           </button>
         {/each}
         {#if threads.length === 0 && location}
@@ -472,6 +494,28 @@
     background: #9a7f28;
     transition: width 1s ease;
     border-radius: 0 0 0 10px;
+  }
+
+  /* LED housing: always visible as a dark red square, like plastic over an unlit bulb. */
+  .expiry-pulse {
+    position: absolute;
+    bottom: 8px;
+    right: 8px;
+    width: 1%;
+    aspect-ratio: 2 / 1;
+    background: #7a1a1a;
+    opacity: 0.35;
+  }
+
+  /* LED lit: bright red with a soft glow, pulses slowly in the last 5 minutes. */
+  @keyframes expiry-pulse {
+    0%, 100% { opacity: 0.8; box-shadow: 0 0 3px 1px rgba(192, 64, 64, 0.5); }
+    50%       { opacity: 1.0; box-shadow: 0 0 6px 2px rgba(192, 64, 64, 0.8); }
+  }
+
+  .expiry-pulse.active {
+    background: #c04040;
+    animation: expiry-pulse 20s ease-in-out infinite;
   }
 
   .thread-card:hover {
