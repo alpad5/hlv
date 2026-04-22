@@ -160,6 +160,7 @@
   <!-- Sidebar / controls + compose -->
   <aside>
     <div class="brand">hlv</div>
+    <a href="/blog" class="blog-link">— blog</a>
 
     <div class="controls">
       <label>
@@ -290,6 +291,17 @@
     text-transform: lowercase;
     line-height: 1;
   }
+
+  .blog-link {
+    font-size: 11px;
+    color: #444;
+    text-decoration: none;
+    letter-spacing: 1px;
+    text-transform: lowercase;
+    margin-top: -16px;
+  }
+
+  .blog-link:hover { color: #888; }
 
   .controls {
     display: flex;
