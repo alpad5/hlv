@@ -32,23 +32,30 @@
     return Math.max(0, Math.min(1, remaining / INACTIVITY_TTL));
   }
 
-  onMount(async () => {
-    if (!navigator.geolocation) {
-      locationError = 'Geolocation is not supported by this browser.';
-      return;
-    }
+  // Asks the browser for the user's location and initialises the feed and
+  // WebSocket connection once granted. Safe to call more than once — e.g.
+  // when the user taps the retry button after an initial denial.
+  function requestLocation() {
+    locationError = null;
     navigator.geolocation.getCurrentPosition(
       async (pos) => {
         location = { lat: pos.coords.latitude, lng: pos.coords.longitude };
         threads = await getFeed(location.lat, location.lng, radius);
         ws = connectWs(location.lat, location.lng, radius, handleWsEvent);
-        // Tick every 30s to keep decay bars draining in real time.
         tickInterval = setInterval(() => { tick++; }, 30_000);
       },
-      (err) => {
+      () => {
         locationError = 'Suena horrible, pero necesitamos que permitas que el servicio obtenga tu ubicación a través del navegador. Esta ubicación no será almacenada ni asociada a ti de ninguna forma.';
       }
     );
+  }
+
+  onMount(() => {
+    if (!navigator.geolocation) {
+      locationError = 'Suena horrible, pero necesitamos que permitas que el servicio obtenga tu ubicación a través del navegador. Esta ubicación no será almacenada ni asociada a ti de ninguna forma.';
+      return;
+    }
+    requestLocation();
   });
 
   onDestroy(() => { ws?.close(); clearInterval(tickInterval); });
@@ -189,7 +196,10 @@
     </div>
 
     {#if locationError}
-      <p class="status error">{locationError}</p>
+      <div class="location-error">
+        <p class="status error">{locationError}</p>
+        <button class="retry-btn" on:click={requestLocation}>intentar de nuevo</button>
+      </div>
     {:else if !location}
       <p class="status">waiting for location…</p>
     {/if}
@@ -380,6 +390,18 @@
 
   .status { font-size: 12px; color: #444; }
   .status.error { color: #7a6218; font-style: italic; line-height: 1.6; }
+
+  .location-error { display: flex; flex-direction: column; gap: 8px; }
+
+  .retry-btn {
+    align-self: flex-start;
+    font-size: 11px;
+    color: #555;
+    border-color: #2a2a2a;
+    padding: 3px 8px;
+  }
+
+  .retry-btn:hover:not(:disabled) { color: #9a7f28; border-color: #9a7f28; }
 
   main {
     flex: 1;
