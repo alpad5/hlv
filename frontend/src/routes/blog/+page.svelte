@@ -79,9 +79,9 @@
   .brand:hover { color: #aaa; }
 
   .tagline {
-    font-size: 18px;
-    color: #888;
-    letter-spacing: 2px;
+    font-size: 11px;
+    color: #444;
+    letter-spacing: 1px;
     text-transform: lowercase;
   }
 
