@@ -46,12 +46,7 @@
         tickInterval = setInterval(() => { tick++; }, 30_000);
       },
       (err) => {
-        const messages = {
-          1: 'Location permission denied. Please allow location access in your browser settings.',
-          2: 'Location unavailable. Check your device GPS/location settings.',
-          3: 'Location request timed out. Try refreshing.'
-        };
-        locationError = messages[err.code] ?? `Location error: ${err.message}`;
+        locationError = 'Suena horrible, pero necesitamos que permitas que el servicio obtenga tu ubicación a través del navegador. Esta ubicación no será almacenada ni asociada a ti de ninguna forma.';
       }
     );
   });
@@ -384,7 +379,7 @@
   button:hover:not(:disabled) { color: #aaa; }
 
   .status { font-size: 12px; color: #444; }
-  .status.error { color: #c0392b; }
+  .status.error { color: #7a6218; font-style: italic; line-height: 1.6; }
 
   main {
     flex: 1;
