@@ -79,8 +79,8 @@
   .brand:hover { color: #aaa; }
 
   .tagline {
-    font-size: 11px;
-    color: #444;
+    font-size: 18px;
+    color: #888;
     letter-spacing: 2px;
     text-transform: lowercase;
   }
@@ -134,7 +134,7 @@
   .body p {
     line-height: 1.75;
     color: #ccc;
-    font-size: 16px;
+    font-size: 17px;
   }
 
   hr {
