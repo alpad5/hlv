@@ -1,3 +1,4 @@
+mod config;
 mod geo;
 mod models;
 mod routes;
@@ -8,6 +9,7 @@ use axum::{
     routing::{get, post},
     Router,
 };
+use config::Config;
 use redis::aio::ConnectionManager;
 use std::collections::HashMap;
 use std::sync::Arc;
@@ -18,6 +20,7 @@ use tower_http::cors::CorsLayer;
 pub struct AppState {
     pub redis: ConnectionManager,
     pub clients: ws::ClientMap,
+    pub config: Config,
 }
 
 #[tokio::main]
@@ -33,6 +36,7 @@ async fn main() {
     let state = AppState {
         redis: manager,
         clients: Arc::new(RwLock::new(HashMap::new())),
+        config: Config::from_env(),
     };
 
     // Background task: every 30 seconds, scan the geo index for thread keys

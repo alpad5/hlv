@@ -72,10 +72,11 @@ pub async fn ws_handler(
     ws: WebSocketUpgrade,
     State(state): State<crate::AppState>,
 ) -> impl IntoResponse {
-    ws.on_upgrade(|socket| handle_socket(socket, state.clients))
+    let max_radius_km = state.config.max_radius_km;
+    ws.on_upgrade(move |socket| handle_socket(socket, state.clients, max_radius_km))
 }
 
-async fn handle_socket(socket: WebSocket, clients: ClientMap) {
+async fn handle_socket(socket: WebSocket, clients: ClientMap, max_radius_km: f64) {
     let id = Uuid::new_v4();
     let (tx, rx) = mpsc::unbounded_channel::<String>();
 
@@ -87,7 +88,7 @@ async fn handle_socket(socket: WebSocket, clients: ClientMap) {
     );
 
     let send_task = tokio::spawn(run_sender(rx, sink));
-    run_receiver(stream, &clients, id).await;
+    run_receiver(stream, &clients, id, max_radius_km).await;
 
     clients.write().await.remove(&id);
     send_task.abort();
@@ -108,12 +109,13 @@ async fn run_receiver(
     mut stream: SplitStream<WebSocket>,
     clients: &ClientMap,
     id: Uuid,
+    max_radius_km: f64,
 ) {
     while let Some(result) = stream.next().await {
         let Ok(msg) = result else { break };
         if let Message::Text(text) = msg {
             if let Ok(update) = serde_json::from_str::<LocationUpdate>(&text) {
-                let radius = update.radius_km.clamp(1.0, 10.0);
+                let radius = update.radius_km.clamp(1.0, max_radius_km);
                 if let Some(client) = clients.write().await.get_mut(&id) {
                     client.lat = update.lat;
                     client.lng = update.lng;
