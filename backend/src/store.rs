@@ -3,8 +3,6 @@ use redis::{aio::ConnectionManager, AsyncCommands, Script};
 use std::time::{SystemTime, UNIX_EPOCH};
 
 const GEO_KEY: &str = "feed:geo";
-const INACTIVITY_TTL_SECS: i64 = 30 * 60; // 30 minutes
-const MAX_LIFETIME_SECS: i64 = 60 * 60;   // 1 hour hard cap
 
 fn now() -> i64 {
     SystemTime::now()
@@ -13,12 +11,14 @@ fn now() -> i64 {
         .as_secs() as i64
 }
 
+/// Store a new thread in Redis with the configured inactivity TTL.
 pub async fn save_thread(
     con: &mut ConnectionManager,
     thread: &Thread,
+    inactivity_ttl_secs: i64,
 ) -> redis::RedisResult<()> {
     let key = format!("thread:{}", thread.id);
-    let ttl = INACTIVITY_TTL_SECS;
+    let ttl = inactivity_ttl_secs;
 
     redis::pipe()
         .hset_multiple(
@@ -48,6 +48,8 @@ pub async fn save_thread(
 pub async fn add_comment(
     con: &mut ConnectionManager,
     comment: &Comment,
+    inactivity_ttl_secs: i64,
+    hard_cap_secs: i64,
 ) -> redis::RedisResult<bool> {
     let thread_key = format!("thread:{}", comment.thread_id);
     let comments_key = format!("thread:{}:comments", comment.thread_id);
@@ -91,8 +93,8 @@ pub async fn add_comment(
         .key(&comments_key)
         .arg(&comment_json)
         .arg(now())
-        .arg(INACTIVITY_TTL_SECS)
-        .arg(MAX_LIFETIME_SECS)
+        .arg(inactivity_ttl_secs)
+        .arg(hard_cap_secs)
         .invoke_async(con)
         .await?;
 

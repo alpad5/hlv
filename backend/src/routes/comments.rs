@@ -18,6 +18,11 @@ pub async fn post_comment(
     Path(thread_id): Path<String>,
     Json(body): Json<CreateComment>,
 ) -> Result<Json<Comment>, StatusCode> {
+    // Reject content that exceeds the configured character limit.
+    if body.content.len() > state.config.max_content_len {
+        return Err(StatusCode::UNPROCESSABLE_ENTITY);
+    }
+
     let now = SystemTime::now()
         .duration_since(UNIX_EPOCH)
         .unwrap()
@@ -31,7 +36,7 @@ pub async fn post_comment(
     };
 
     let mut con = state.redis.clone();
-    let saved = add_comment(&mut con, &comment)
+    let saved = add_comment(&mut con, &comment, state.config.inactivity_ttl_secs, state.config.hard_cap_secs)
         .await
         .map_err(|_| StatusCode::INTERNAL_SERVER_ERROR)?;
 
