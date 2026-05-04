@@ -173,7 +173,7 @@ A compliant qhlv node exposes the following as environment variables or a config
 
 | Parameter | Default | Description |
 |---|---|---|
-| `INACTIVITY_TTL_SECS` | 900 | Seconds of silence before a thread expires |
+| `INACTIVITY_TTL_SECS` | 1800 | Seconds of silence before a thread expires |
 | `HARD_CAP_SECS` | 3600 | Maximum thread lifetime from creation |
 | `DEFAULT_SIGMA_M` | 300 | Default Gaussian jitter in metres |
 | `MAX_SIGMA_M` | 1000 | Upper bound on client-requested sigma |
