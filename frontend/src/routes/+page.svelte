@@ -204,6 +204,7 @@
   <aside>
     <div class="brand">hlv</div>
     <a href="/blog" class="blog-link" target="_blank" rel="noopener noreferrer">— blog</a>
+    <a href="/como" class="blog-link" target="_blank" rel="noopener noreferrer">— cómo funciona</a>
 
     <div class="controls">
       <label>
