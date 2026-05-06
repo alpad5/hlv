@@ -339,6 +339,25 @@
       ctx.strokeStyle = 'rgba(255,255,255,0.09)';
       ctx.strokeRect(b.x + 0.5, b.y + 0.5, b.w - 1, b.h - 1);
     }
+
+    // Diagonal road — an older pre-grid street cutting across the city from lower-left to upper-right
+    ctx.save();
+    ctx.beginPath();
+    ctx.moveTo(0, 158);
+    ctx.quadraticCurveTo(88, 112, 200, 58);
+    ctx.strokeStyle = 'rgba(255,255,255,0.06)';
+    ctx.lineWidth = 5;
+    ctx.stroke();
+    ctx.restore();
+
+    // Tiny plaza — open square at the street crossing in the lower-left grid (x≈40, y≈134)
+    ctx.save();
+    ctx.fillStyle = 'rgba(255,255,255,0.07)';
+    ctx.fillRect(40, 134, 8, 10);
+    ctx.strokeStyle = 'rgba(255,255,255,0.15)';
+    ctx.lineWidth = 0.5;
+    ctx.strokeRect(40.5, 134.5, 7, 9);
+    ctx.restore();
   }
 
   function drawCombGrid(ctx, alpha) {
@@ -558,11 +577,14 @@
 </svelte:head>
 
 <div class="page">
-  <header>
-    <a href="/" class="back">hlv</a>
-    <span class="sep">·</span>
-    <span class="title">cómo funciona</span>
-  </header>
+  <nav>
+    <div class="brand-group">
+      <a href="/" class="brand">hlv</a>
+      <span class="tagline">hablan los vecinos</span>
+    </div>
+    <span class="sep">/</span>
+    <span class="crumb">cómo funciona</span>
+  </nav>
 
   <section>
     <h2>ajuste a la cuadrícula</h2>
@@ -576,7 +598,7 @@
         <canvas bind:this={snapCanvas} width={W} height={H}></canvas>
       </div>
     </div>
-    <p class="caption">blanco: posición real — morado: ajustado a la cuadrícula.</p>
+    <p class="caption">la posición real (blanco) se desplaza al cruce de cuadrícula más cercano y queda registrada como el punto morado — nunca exactamente donde estabas.</p>
   </section>
 
   <section>
@@ -596,8 +618,7 @@
       <input type="range" min="50" max="1000" step="50" bind:value={noiseSigma} />
       <span class="noise-value">{noiseSigma}m</span>
     </div>
-    <p class="slider-note">al mover el slider de precisión, el área posible del mensaje cambia.</p>
-    <p class="caption">morado: posición ajustada a la cuadrícula — amarillo: posición publicada.</p>
+    <p class="caption">el punto ajustado (morado) se dispersa aleatoriamente antes de publicarse — el punto amarillo es la posición que ve el servidor; el slider cambia el radio de dispersión posible.</p>
   </section>
 
   <section>
@@ -612,7 +633,7 @@
         <canvas bind:this={combCanvas} width={CW} height={CH}></canvas>
       </div>
     </div>
-    <p class="caption">blanco: posición real — morado: ajustada a la cuadrícula — amarillo: publicada.</p>
+    <p class="caption">posición real (blanco) → ajuste a la cuadrícula (morado) → ruido gaussiano (amarillo): lo que se almacena nunca coincide con dónde estabas.</p>
   </section>
 
   <section>
@@ -633,7 +654,7 @@
       <input type="range" min="1" max="10" step="1" bind:value={feedRadius} />
       <span class="noise-value">{feedRadius}km</span>
     </div>
-    <p class="caption">blanco: tu posición real (no almacenada) — amarillo: mensajes dentro del radio.</p>
+    <p class="caption">solo ves los mensajes dentro del radio (amarillo); tu posición real (blanco) se usa para el cálculo pero nunca se almacena en el servidor.</p>
   </section>
 </div>
 
@@ -642,8 +663,8 @@
 
   :global(body) {
     margin: 0;
-    background: #111;
-    color: #ccc;
+    background: #0a0a0a;
+    color: #e0e0e0;
     font-family: 'DM Mono', monospace;
     font-size: 18px;
     line-height: 1.7;
@@ -655,33 +676,46 @@
     padding: 48px 24px 80px;
   }
 
-  header {
+  nav {
     display: flex;
     align-items: baseline;
-    gap: 8px;
+    gap: 10px;
     margin-bottom: 56px;
-    font-size: 14px;
   }
 
-  .back {
-    color: #fff;
-    text-decoration: none;
+  .brand-group {
+    display: flex;
+    flex-direction: column;
+    gap: 4px;
+  }
+
+  .brand {
     font-size: 40px;
     letter-spacing: 10px;
+    color: #fff;
+    text-decoration: none;
     line-height: 1;
   }
 
-  .back:hover { color: #aaa; }
+  .brand:hover { color: #aaa; }
+
+  .tagline {
+    font-size: 11px;
+    color: #444;
+    letter-spacing: 1px;
+    text-transform: lowercase;
+  }
 
   .sep {
     font-size: 20px;
     color: #333;
   }
 
-  .title {
+  .crumb {
     font-size: 14px;
     color: #555;
     letter-spacing: 2px;
+    text-transform: lowercase;
   }
 
   section {
@@ -693,12 +727,12 @@
     font-weight: 400;
     letter-spacing: 2px;
     text-transform: lowercase;
-    color: #666;
+    color: #9a7f28;
     margin: 0 0 16px;
   }
 
   p {
-    color: #888;
+    color: #ccc;
     margin: 0 0 28px;
     font-size: 17px;
   }
@@ -710,11 +744,6 @@
 
   .glass-frame {
     display: inline-block;
-    border-radius: 14px;
-    border: 2px solid rgba(255, 255, 255, 0.14);
-    box-shadow:
-      inset 0 2px 0 rgba(255, 255, 255, 0.08),
-      inset 0 -2px 0 rgba(255, 255, 255, 0.03);
     overflow: hidden;
     line-height: 0;
   }
@@ -774,20 +803,18 @@
     cursor: pointer;
   }
 
-  .slider-note {
-    margin-top: 10px;
-    font-size: 11px;
-    color: #555;
-    text-align: center;
-    margin-bottom: 0;
-    font-style: italic;
-  }
-
   .caption {
     margin-top: 14px;
-    font-size: 11px;
-    color: #444;
+    font-size: 12px;
+    color: #888;
     margin-bottom: 0;
     text-align: center;
+    line-height: 1.6;
+  }
+
+  @media (max-width: 640px) {
+    .page { padding: 32px 16px 60px; }
+    .brand { font-size: 28px; letter-spacing: 8px; }
+    nav { margin-bottom: 40px; }
   }
 </style>
