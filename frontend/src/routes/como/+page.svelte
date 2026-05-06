@@ -645,7 +645,7 @@
     background: #111;
     color: #ccc;
     font-family: 'DM Mono', monospace;
-    font-size: 14px;
+    font-size: 18px;
     line-height: 1.7;
   }
 
@@ -660,23 +660,28 @@
     align-items: baseline;
     gap: 8px;
     margin-bottom: 56px;
-    font-size: 13px;
+    font-size: 14px;
   }
 
   .back {
     color: #fff;
     text-decoration: none;
-    font-size: 20px;
-    letter-spacing: 6px;
+    font-size: 40px;
+    letter-spacing: 10px;
+    line-height: 1;
   }
 
   .back:hover { color: #aaa; }
 
-  .sep { color: #333; }
+  .sep {
+    font-size: 20px;
+    color: #333;
+  }
 
   .title {
+    font-size: 14px;
     color: #555;
-    letter-spacing: 1px;
+    letter-spacing: 2px;
   }
 
   section {
@@ -684,7 +689,7 @@
   }
 
   h2 {
-    font-size: 12px;
+    font-size: 14px;
     font-weight: 400;
     letter-spacing: 2px;
     text-transform: lowercase;
@@ -695,7 +700,7 @@
   p {
     color: #888;
     margin: 0 0 28px;
-    font-size: 13px;
+    font-size: 17px;
   }
 
   .canvas-wrap {
