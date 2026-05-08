@@ -671,7 +671,7 @@
   }
 
   .page {
-    max-width: 480px;
+    max-width: 680px;
     margin: 0 auto;
     padding: 48px 24px 80px;
   }
@@ -735,6 +735,7 @@
     color: #ccc;
     margin: 0 0 28px;
     font-size: 17px;
+    line-height: 1.75;
   }
 
   .canvas-wrap {
@@ -746,6 +747,8 @@
     display: inline-block;
     overflow: hidden;
     line-height: 0;
+    border: 1px solid rgba(224, 224, 224, 0.15);
+    border-radius: 8px;
   }
 
   canvas {
@@ -787,19 +790,19 @@
   input[type='range']::-webkit-slider-thumb {
     -webkit-appearance: none;
     appearance: none;
-    width: 10px;
-    height: 10px;
-    border-radius: 50%;
-    background: rgba(255, 255, 255, 0.5);
+    width: 18px;
+    height: 9px;
+    border-radius: 1px;
+    background: rgba(192, 64, 64, 0.7);
     cursor: pointer;
   }
 
   input[type='range']::-moz-range-thumb {
-    width: 10px;
-    height: 10px;
+    width: 18px;
+    height: 9px;
     border: none;
-    border-radius: 50%;
-    background: rgba(255, 255, 255, 0.5);
+    border-radius: 1px;
+    background: rgba(192, 64, 64, 0.7);
     cursor: pointer;
   }
 
