@@ -538,6 +538,166 @@
     ctx.fill();
   }
 
+  // ─── lifecycle: shared card visual ─────────────────────────────────────────
+
+  // Mustard colour for the life bar; LED housing/lit colours match the real app.
+  const MUSTARD       = [154, 127, 40];
+  const LED_HOUSING   = [122, 26, 26];
+  const LED_LIT       = [192, 64, 64];
+  const LIFE_THRESH   = 5 / 30; // last 5 min of a 30-min inactivity TTL
+
+  // Thread-card mockup geometry (shared by the two lifecycle animations).
+  const CARD = { x: 15, y: 60, w: 170, h: 80, r: 10 };
+
+  // Draws a small placeholder thread card — outline, faint text lines.
+  // alpha lets the card fade in/out at the start/end of a cycle.
+  function drawCard(ctx, alpha) {
+    ctx.save();
+    ctx.globalAlpha = alpha;
+
+    // Card background and border
+    roundRect(ctx, CARD.x, CARD.y, CARD.w, CARD.h, CARD.r);
+    ctx.fillStyle = '#0f0f0f';
+    ctx.fill();
+    ctx.strokeStyle = 'rgba(255,255,255,0.08)';
+    ctx.lineWidth = 1;
+    ctx.stroke();
+
+    // Faint stand-in text lines
+    ctx.fillStyle = 'rgba(255,255,255,0.18)';
+    ctx.fillRect(CARD.x + 12, CARD.y + 18, 124, 2);
+    ctx.fillStyle = 'rgba(255,255,255,0.12)';
+    ctx.fillRect(CARD.x + 12, CARD.y + 28, 96,  2);
+    ctx.fillRect(CARD.x + 12, CARD.y + 38, 110, 2);
+
+    ctx.restore();
+  }
+
+  function roundRect(ctx, x, y, w, h, r) {
+    ctx.beginPath();
+    ctx.moveTo(x + r, y);
+    ctx.lineTo(x + w - r, y);
+    ctx.quadraticCurveTo(x + w, y, x + w, y + r);
+    ctx.lineTo(x + w, y + h - r);
+    ctx.quadraticCurveTo(x + w, y + h, x + w - r, y + h);
+    ctx.lineTo(x + r, y + h);
+    ctx.quadraticCurveTo(x, y + h, x, y + h - r);
+    ctx.lineTo(x, y + r);
+    ctx.quadraticCurveTo(x, y, x + r, y);
+    ctx.closePath();
+  }
+
+  // Mustard life bar drawn flush against the bottom edge of the card.
+  function drawLifeBar(ctx, frac, alpha) {
+    if (frac <= 0) return;
+    ctx.save();
+    ctx.globalAlpha = alpha;
+    ctx.fillStyle = rgba(MUSTARD, 0.95);
+    ctx.fillRect(CARD.x, CARD.y + CARD.h - 3, CARD.w * frac, 3);
+    ctx.restore();
+  }
+
+  // LED in the bottom-right of the card. When `lit` is true, pulses softly.
+  // pulsePeriod lets the demo speed the breath up so a few cycles fit in
+  // a short loop (the real .expiry-pulse uses 20s).
+  function drawLed(ctx, lit, alpha, now, pulsePeriod = 20000) {
+    const led = { x: CARD.x + CARD.w - 14, y: CARD.y + CARD.h - 9, w: 8, h: 4 };
+    ctx.save();
+    if (lit) {
+      const t = (now % pulsePeriod) / pulsePeriod;
+      const pulse = 0.5 + 0.5 * Math.sin(t * Math.PI * 2 - Math.PI / 2);
+      const op    = (0.45 + 0.15 * pulse) * alpha;
+      const glow  = 2 + 2 * pulse;
+      ctx.shadowColor = rgba(LED_LIT, 0.35 * pulse + 0.15);
+      ctx.shadowBlur  = glow;
+      ctx.fillStyle   = rgba(LED_LIT, op);
+    } else {
+      // Dormant housing — same dark red plastic as the real app
+      ctx.fillStyle = rgba(LED_HOUSING, 0.35 * alpha);
+    }
+    ctx.fillRect(led.x, led.y, led.w, led.h);
+    ctx.restore();
+  }
+
+  // ─── lifecycle: vida del hilo (drain + reply refill) ───────────────────────
+
+  let lifeCanvas;
+  const LFW = 200, LFH = 200;
+  const LIFE_CYCLE = 30000; // 30s per full demo cycle
+  let lifeStart = 0;
+
+  // Returns life fraction [0,1] for the bar at cycle progress p [0,1].
+  // First drain → reply refill → second drain → expiry.
+  function lifeBarFraction(p) {
+    if (p < 0.36) return 1 - (p / 0.36) * 0.65;          // drain to 35%
+    if (p < 0.40) return 0.35 + ((p - 0.36) / 0.04) * 0.65; // refill to 100%
+    if (p < 0.92) return 1 - (p - 0.40) / 0.52;           // drain to 0
+    return 0;
+  }
+
+  function drawLife(ctx, now) {
+    if (!lifeStart) lifeStart = now;
+    const p = ((now - lifeStart) % LIFE_CYCLE) / LIFE_CYCLE;
+
+    ctx.clearRect(0, 0, LFW, LFH);
+
+    // Card fades in over the first 4% and out over the last 4%
+    const cardAlpha = p < 0.04 ? p / 0.04 : p > 0.96 ? (1 - p) / 0.04 : 1;
+    drawCard(ctx, cardAlpha);
+
+    // Reply event: brief white "+" indicator above the bar at the refill moment
+    if (p >= 0.36 && p < 0.50) {
+      const replyT = (p - 0.36) / 0.14;
+      const replyAlpha = (1 - replyT) * cardAlpha;
+      ctx.save();
+      ctx.globalAlpha = replyAlpha;
+      ctx.font = '14px "DM Mono", monospace';
+      ctx.fillStyle = rgba(WHITE, 0.7);
+      ctx.textAlign = 'center';
+      ctx.textBaseline = 'middle';
+      ctx.fillText('+1', CARD.x + CARD.w / 2, CARD.y + CARD.h + 16);
+      ctx.restore();
+    }
+
+    drawLifeBar(ctx, lifeBarFraction(p), cardAlpha);
+    drawLed(ctx, false, cardAlpha, now); // LED stays dormant in this animation
+  }
+
+  // ─── lifecycle: aviso final (LED activates in the last 5 min) ──────────────
+
+  let ledCanvas;
+  const LDW = 200, LDH = 200;
+  const LED_CYCLE = 30000;
+  let ledStart = 0;
+
+  function drawLedAnim(ctx, now) {
+    if (!ledStart) ledStart = now;
+    const p = ((now - ledStart) % LED_CYCLE) / LED_CYCLE;
+
+    ctx.clearRect(0, 0, LDW, LDH);
+
+    const cardAlpha = p < 0.04 ? p / 0.04 : p > 0.96 ? (1 - p) / 0.04 : 1;
+    drawCard(ctx, cardAlpha);
+
+    // Bar starts just above the 5-min threshold and drains to zero — the
+    // whole cycle is in (or near) the LED-active window so a couple of pulses
+    // are visible.
+    const start = LIFE_THRESH * 1.25;
+    const frac = p < 0.92 ? start * (1 - p / 0.92) : 0;
+
+    // Tick mark on the bar at the 5-min threshold (last 17%) — shows where the LED kicks in
+    ctx.save();
+    ctx.globalAlpha = cardAlpha;
+    const tickX = CARD.x + CARD.w * LIFE_THRESH;
+    ctx.fillStyle = rgba(LED_LIT, 0.45);
+    ctx.fillRect(tickX - 0.5, CARD.y + CARD.h - 6, 1, 5);
+    ctx.restore();
+
+    drawLifeBar(ctx, frac, cardAlpha);
+    // 10s pulse for the demo so 2–3 cycles fit in the ~28s active window
+    drawLed(ctx, frac > 0 && frac <= LIFE_THRESH, cardAlpha, now, 10000);
+  }
+
   // ─── shared RAF loop ───────────────────────────────────────────────────────
 
   let raf;
@@ -554,6 +714,12 @@
 
     const rc = radiusCanvas?.getContext('2d');
     if (rc) drawRadius(rc);
+
+    const lc = lifeCanvas?.getContext('2d');
+    if (lc) drawLife(lc, now);
+
+    const dc = ledCanvas?.getContext('2d');
+    if (dc) drawLedAnim(dc, now);
 
     raf = requestAnimationFrame(loop);
   }
@@ -656,6 +822,35 @@
     </div>
     <p class="caption">solo ves los mensajes dentro del radio (amarillo); tu posición real (blanco) se usa para el cálculo pero nunca se almacena en el servidor.</p>
   </section>
+
+  <section>
+    <h2>ciclo de vida de un hilo</h2>
+    <p>
+      cada hilo nace con treinta minutos de vida y un tope máximo de una
+      hora. la barra en la base del mensaje muestra cuánto le queda — y
+      cada respuesta lo mantiene vivo, hasta alcanzar ese tope.
+    </p>
+    <div class="canvas-wrap">
+      <div class="glass-frame">
+        <canvas bind:this={lifeCanvas} width={LFW} height={LFH}></canvas>
+      </div>
+    </div>
+    <p class="between">
+      cuando quedan menos de cinco minutos, una luz roja se enciende y
+      parpadea suavemente.
+    </p>
+
+    <div class="canvas-wrap">
+      <div class="glass-frame">
+        <canvas bind:this={ledCanvas} width={LDW} height={LDH}></canvas>
+      </div>
+    </div>
+    <p class="caption">la animación está acelerada.</p>
+    <p class="closing">
+      son indicadores útiles para identificar de un vistazo las
+      conversaciones que están a punto de desaparecer.
+    </p>
+  </section>
 </div>
 
 <style>
@@ -723,12 +918,23 @@
   }
 
   h2 {
-    font-size: 14px;
+    font-size: 11px;
     font-weight: 400;
-    letter-spacing: 2px;
+    letter-spacing: 4px;
     text-transform: lowercase;
     color: #9a7f28;
     margin: 0 0 16px;
+    display: flex;
+    align-items: center;
+    gap: 10px;
+  }
+
+  h2::before {
+    content: '';
+    display: inline-block;
+    width: 16px;
+    height: 1px;
+    background: #9a7f28;
   }
 
   p {
@@ -813,6 +1019,17 @@
     margin-bottom: 0;
     text-align: center;
     line-height: 1.6;
+  }
+
+  /* Body paragraph that sits between two stacked animations — 28px gap on both sides. */
+  .between {
+    margin-top: 28px;
+  }
+
+  /* Closing line that wraps the section — sits below the last caption. */
+  .closing {
+    margin-top: 36px;
+    color: #aaa;
   }
 
   @media (max-width: 640px) {

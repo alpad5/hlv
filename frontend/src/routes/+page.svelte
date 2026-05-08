@@ -378,7 +378,7 @@
     -webkit-appearance: none;
     appearance: none;
     width: 100%;
-    height: 1px;
+    height: 2px;
     background: #333;
     outline: none;
     border-radius: 1px;
@@ -388,19 +388,19 @@
   input[type="range"]::-webkit-slider-thumb {
     -webkit-appearance: none;
     appearance: none;
-    width: 18px;
-    height: 9px;
+    width: 28px;
+    height: 14px;
     border-radius: 1px;
-    background: rgba(192, 64, 64, 0.7);
+    background: rgba(192, 64, 64, 0.9);
     cursor: pointer;
   }
 
   input[type="range"]::-moz-range-thumb {
-    width: 18px;
-    height: 9px;
+    width: 28px;
+    height: 14px;
     border: none;
     border-radius: 1px;
-    background: rgba(192, 64, 64, 0.7);
+    background: rgba(192, 64, 64, 0.9);
     cursor: pointer;
   }
 
