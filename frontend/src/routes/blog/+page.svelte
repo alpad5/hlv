@@ -108,10 +108,10 @@
   }
 
   h2 {
-    font-size: 20px;
+    font-size: 24px;
     font-weight: 400;
     color: #9a7f28;
-    letter-spacing: 1px;
+    letter-spacing: 0.5px;
     margin-bottom: 8px;
     text-transform: lowercase;
   }
