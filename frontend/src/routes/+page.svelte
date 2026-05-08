@@ -375,8 +375,32 @@
   label strong { color: #e0e0e0; }
 
   input[type="range"] {
+    -webkit-appearance: none;
+    appearance: none;
     width: 100%;
-    accent-color: #e0e0e0;
+    height: 1px;
+    background: #333;
+    outline: none;
+    border-radius: 1px;
+    cursor: pointer;
+  }
+
+  input[type="range"]::-webkit-slider-thumb {
+    -webkit-appearance: none;
+    appearance: none;
+    width: 18px;
+    height: 9px;
+    border-radius: 1px;
+    background: rgba(192, 64, 64, 0.7);
+    cursor: pointer;
+  }
+
+  input[type="range"]::-moz-range-thumb {
+    width: 18px;
+    height: 9px;
+    border: none;
+    border-radius: 1px;
+    background: rgba(192, 64, 64, 0.7);
     cursor: pointer;
   }
 
@@ -394,8 +418,9 @@
   }
 
   textarea {
-    background: #111;
-    border: 1px solid #222;
+    background: #181818;
+    border: none;
+    border-radius: 8px;
     color: #7a6218;
     padding: 10px;
     font-family: inherit;
@@ -404,9 +429,14 @@
     width: 100%;
     outline: none;
     line-height: 1.5;
+    animation: textarea-breathe 40s ease-in-out infinite;
   }
 
-  textarea:focus { border-color: #444; }
+  /* Slow, faint white "breath" — like the LED pulse but white and dimmer. */
+  @keyframes textarea-breathe {
+    0%, 100% { box-shadow: 0 0 0 0 rgba(255, 255, 255, 0); }
+    50%      { box-shadow: 0 0 24px 4px rgba(255, 255, 255, 0.12); }
+  }
   .compose textarea::placeholder { color: #564812; opacity: 1; font-family: 'DM Mono', monospace; font-size: 17px; font-style: italic; }
   .comment-compose textarea::placeholder { color: #564812; opacity: 0.6; font-size: 17px; font-style: italic; }
 

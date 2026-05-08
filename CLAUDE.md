@@ -148,3 +148,4 @@ When adding new code or modifying existing code, both levels should be present w
 - `thread_expired` WebSocket event to remove dead threads from feed automatically
 - Error states in UI (failed post, network issues)
 - Production deployment
+- CI deploy: GitHub Actions workflow on push to `main` to build the frontend and run `wrangler pages deploy`, replacing the manual command. Needs a Cloudflare API token (scoped to Pages:Edit) added as a repo secret (`CLOUDFLARE_API_TOKEN`); account ID can be a second secret or inline.
