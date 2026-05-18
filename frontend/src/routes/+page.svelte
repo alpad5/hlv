@@ -1,5 +1,5 @@
 <script>
-  import { onMount, onDestroy } from 'svelte';
+  import { onMount, onDestroy, tick } from 'svelte';
   import { postThread, postComment, getFeed, getComments, connectWs } from '$lib/api.js';
 
   let threads = [];
@@ -16,8 +16,8 @@
   let retrying = false;
 
   // Incremented every 30s so that decay bar widths re-evaluate reactively.
-  let tick = 0;
-  let tickInterval;
+  let clockTick = 0;
+  let clockTickInterval;
 
   // Mirror of the backend's inactivity window (30 min). A thread's effective
   // expiry is the sooner of its hard cap or last_activity + this value.
@@ -25,8 +25,8 @@
 
   // Returns a value in [0, 1] representing how much life this thread has left.
   // 1 = just posted or just replied to; 0 = about to expire.
-  // _tick is only here to make Svelte re-run this whenever the clock advances.
-  function decayFraction(thread, _tick) {
+  // _clockTick is only here to make Svelte re-run this whenever the clock advances.
+  function decayFraction(thread, _clockTick) {
     const now = Date.now() / 1000;
     const effectiveExpiry = Math.min(thread.expires_at, thread.last_activity + INACTIVITY_TTL);
     const remaining = effectiveExpiry - now;
@@ -58,7 +58,7 @@
         location = { lat: pos.coords.latitude, lng: pos.coords.longitude };
         threads = await getFeed(location.lat, location.lng, radius);
         ws = connectWs(location.lat, location.lng, radius, handleWsEvent);
-        tickInterval = setInterval(() => { tick++; }, 30_000);
+        clockTickInterval = setInterval(() => { clockTick++; }, 30_000);
       },
       () => {
         retrying = false;
@@ -75,7 +75,7 @@
     requestLocation();
   });
 
-  onDestroy(() => { ws?.close(); clearInterval(tickInterval); });
+  onDestroy(() => { ws?.close(); clearInterval(clockTickInterval); });
 
   function handleWsEvent(event) {
     if (event.type === 'new_thread') {
@@ -113,9 +113,31 @@
     }
   }
 
+  // Opens a thread in-place: the card it lives in expands to show replies
+  // and a reply box. Other cards remain visible but dimmed (see CSS).
   async function openThread(thread) {
     activeThread = thread;
     comments = await getComments(thread.id);
+    // Bring the focused card into a comfortable position so its replies are
+    // visible without the user having to scroll immediately. `tick()` waits
+    // for Svelte to flush the DOM so the expanded card actually exists before
+    // we ask the browser to scroll to it.
+    await tick();
+    const el = document.querySelector(`[data-thread-id="${thread.id}"]`);
+    // `nearest` keeps the card put if it's already visible — only nudges
+    // the viewport when the expanded card would otherwise spill off-screen.
+    el?.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
+  }
+
+  function closeThread() {
+    activeThread = null;
+    comments = [];
+    commentDraft = '';
+  }
+
+  // Escape closes the focused thread — keeps parity with clicking outside.
+  function handleGlobalKey(e) {
+    if (e.key === 'Escape' && activeThread) closeThread();
   }
 
   async function submitComment() {
@@ -135,16 +157,18 @@
     ws?.send(JSON.stringify({ lat: location.lat, lng: location.lng, radius_km: radius }));
   }
 
+  // Spanish-style elapsed time, e.g. "hace 3m". The "hace" prefix makes it
+  // unambiguous that the number is time-since-post, not a time-of-day.
   function timeAgo(ts) {
     const diff = Math.floor(Date.now() / 1000 - ts);
-    if (diff < 60) return `${diff}s`;
-    if (diff < 3600) return `${Math.floor(diff / 60)}m`;
-    return `${Math.floor(diff / 3600)}h`;
+    if (diff < 60) return `hace ${diff}s`;
+    if (diff < 3600) return `hace ${Math.floor(diff / 60)}m`;
+    return `hace ${Math.floor(diff / 3600)}h`;
   }
 
   // Returns true when fewer than 5 minutes remain on a thread's life.
-  // _tick is a reactive dependency so this re-evaluates every 30s.
-  function isNearExpiry(thread, _tick) {
+  // _clockTick is a reactive dependency so this re-evaluates every 30s.
+  function isNearExpiry(thread, _clockTick) {
     const now = Date.now() / 1000;
     const effectiveExpiry = Math.min(thread.expires_at, thread.last_activity + INACTIVITY_TTL);
     return (effectiveExpiry - now) < 5 * 60;
@@ -199,6 +223,8 @@
   }
 </script>
 
+<svelte:window on:keydown={handleGlobalKey} />
+
 <div class="app">
   <!-- Sidebar / controls + compose -->
   <aside>
@@ -249,62 +275,95 @@
     {/if}
   </aside>
 
-  <!-- Feed -->
+  <!-- Feed.
+       The feed is always present. When a thread is opened, its card expands
+       in place to show replies and a reply box — the rest of the feed dims
+       out around it (see CSS .dimmed). This keeps the visual identity of
+       the conversation bubble continuous: the same card you tapped is the
+       same card whose replies you now see, with the same border, the same
+       drained expiry bar, the same LED. -->
   <main>
-    {#if activeThread}
-      <div class="thread-view">
-        <button class="back" on:click={() => { activeThread = null; comments = []; }} aria-label="back">
-          <svg xmlns="http://www.w3.org/2000/svg" width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><line x1="22" y1="12" x2="5" y2="12"/><polyline points="12 19 5 12 12 5"/></svg>
-        </button>
-        <div class="thread-op">
-          <p>{activeThread.content}</p>
-          <span class="meta">{timeAgo(activeThread.created_at)}</span>
-        </div>
-        <div class="comment-list">
-          {#each comments as c}
-            <div class="comment">
-              <p>{c.content}</p>
-              <span class="meta">{timeAgo(c.created_at)}</span>
-            </div>
-          {/each}
-        </div>
-        <div class="comment-compose">
-          <textarea
-            bind:value={commentDraft}
-            placeholder="        ← respondo aquí"
-            rows="2"
-            on:keydown={handleCommentKey}
-            maxlength="300"
-          ></textarea>
-          <button on:click={submitComment} disabled={!commentDraft.trim() || posting} aria-label="reply">
-            {#if posting}…{:else}<svg xmlns="http://www.w3.org/2000/svg" width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="9 10 4 15 9 20"/><path d="M20 2v9a4 4 0 0 1-4 4H2"/></svg>{/if}
-          </button>
-        </div>
-      </div>
-    {:else}
-      <div class="feed">
-        {#each threads as t (t.id)}
-          <button class="thread-card" on:click={() => openThread(t)}>
+    <div class="feed" class:has-active={activeThread}>
+      {#each threads as t (t.id)}
+        {@const isActive = activeThread?.id === t.id}
+        <!-- Active card: renders as a non-button container so it can hold
+             a textarea and reply button inside it (nested buttons aren't
+             allowed). Inactive cards remain real buttons for accessibility. -->
+        {#if isActive}
+          <article class="thread-card active" data-thread-id={t.id}>
+            <button class="thread-close" on:click={closeThread} aria-label="close">
+              <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>
+            </button>
             <p class="thread-content">{t.content}</p>
             <div class="thread-meta">
               <span>{t.comment_count} {t.comment_count === 1 ? 'respuesta' : 'respuestas'}</span>
               <span>{timeAgo(t.created_at)}</span>
             </div>
-            <!-- Decay bar: drains as the thread approaches expiry, refills on reply -->
-            <div class="expiry-bar" style="width: {decayFraction(t, tick) * 100}%"></div>
-            <!-- Pulse light: dormant square that wakes up in the last 5 minutes -->
+
+            <!-- In the active card the expiry bar moves up to sit directly under
+                 the OP. It does double duty here: it shows remaining life right
+                 where the eye lands, AND it acts as the visual seam separating
+                 the original post from the replies below. -->
+            <div class="expiry-bar inline" style="width: {decayFraction(t, clockTick) * 100}%"></div>
+
+            <!-- Replies live inside the same card — visual continuity with the OP. -->
+            {#if comments.length > 0}
+              <div class="comment-list">
+                {#each comments as c}
+                  <div class="comment">
+                    <p>{c.content}</p>
+                    <span class="meta">{timeAgo(c.created_at)}</span>
+                  </div>
+                {/each}
+              </div>
+            {/if}
+
+            <div class="comment-compose" class:no-divider={comments.length === 0}>
+              <textarea
+                bind:value={commentDraft}
+                placeholder="        ← respondo aquí"
+                rows="2"
+                on:keydown={handleCommentKey}
+                maxlength="300"
+              ></textarea>
+              <button on:click={submitComment} disabled={!commentDraft.trim() || posting} aria-label="reply">
+                {#if posting}…{:else}<svg xmlns="http://www.w3.org/2000/svg" width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="9 10 4 15 9 20"/><path d="M20 2v9a4 4 0 0 1-4 4H2"/></svg>{/if}
+              </button>
+            </div>
+
+            <!-- LED stays at the bottom-right corner — it's a separate signal
+                 ("about to expire") and benefits from being unmistakable. -->
             <div
               class="expiry-pulse"
-              class:active={isNearExpiry(t, tick)}
+              class:active={isNearExpiry(t, clockTick)}
+              style="animation-delay: {pulseDelay(t.id)}s"
+            ></div>
+          </article>
+        {:else}
+          <button
+            class="thread-card"
+            class:dimmed={activeThread}
+            data-thread-id={t.id}
+            on:click={() => openThread(t)}
+          >
+            <p class="thread-content">{t.content}</p>
+            <div class="thread-meta">
+              <span>{t.comment_count} {t.comment_count === 1 ? 'respuesta' : 'respuestas'}</span>
+              <span>{timeAgo(t.created_at)}</span>
+            </div>
+            <div class="expiry-bar" style="width: {decayFraction(t, clockTick) * 100}%"></div>
+            <div
+              class="expiry-pulse"
+              class:active={isNearExpiry(t, clockTick)}
               style="animation-delay: {pulseDelay(t.id)}s"
             ></div>
           </button>
-        {/each}
-        {#if threads.length === 0 && location}
-          <p class="empty">nada por aquí. sé el primero.</p>
         {/if}
-      </div>
-    {/if}
+      {/each}
+      {#if threads.length === 0 && location}
+        <p class="empty">nada por aquí. sé el primero.</p>
+      {/if}
+    </div>
   </main>
 </div>
 
@@ -527,6 +586,15 @@
     border-radius: 0 0 0 10px;
   }
 
+  /* Inline variant — used inside the active (expanded) card. The bar moves up
+     to sit right under the OP so the user can read the remaining life next to
+     the post itself, and it doubles as the seam between OP and replies. */
+  .expiry-bar.inline {
+    position: static;
+    margin: 14px 0;
+    border-radius: 1px;
+  }
+
   /* LED housing: always visible as a dark red square, like plastic over an unlit bulb. */
   .expiry-pulse {
     position: absolute;
@@ -555,6 +623,45 @@
     transform: scale(1.012);
   }
 
+  /* When a thread is open, other cards recede into the background. They stay
+     visible so the user keeps spatial context, but lose grab so the focused
+     conversation reads as the only "live" thing on screen. */
+  .thread-card.dimmed {
+    opacity: 0.18;
+    transition: opacity 0.3s ease, transform 0.15s ease, border-color 0.15s ease;
+  }
+  .thread-card.dimmed:hover {
+    opacity: 0.45;
+    transform: none;
+    background: none;
+    border-color: #222;
+  }
+
+  /* Focused card — same border, same radius, same expiry bar, same LED.
+     The only difference vs the resting state is that it now contains the
+     replies and a reply box. No scale, no shadow trickery — the card stays
+     exactly where it sat in the feed. */
+  .thread-card.active {
+    cursor: default;
+    border-color: #333;
+    background: #0f0f0f;
+    padding-top: 16px;
+    padding-bottom: 24px;
+    transition: opacity 0.3s ease;
+  }
+  .thread-card.active:hover { transform: none; }
+
+  .thread-close {
+    position: absolute;
+    top: 8px;
+    right: 8px;
+    padding: 4px;
+    border: none;
+    color: #444;
+    background: none;
+  }
+  .thread-close:hover { color: #aaa; border: none; }
+
   .thread-content {
     line-height: 1.5;
     white-space: pre-wrap;
@@ -568,63 +675,49 @@
     color: #555;
   }
 
-  .thread-view {
-    display: flex;
-    flex-direction: column;
-    height: 100%;
-    min-height: 0;
-    overflow-y: auto;
-    width: 100%;
-  }
-
-  .back {
-    border: 1px solid #1e1e1e;
-    border-radius: 8px;
-    margin: 12px 16px;
-    width: calc(100% - 32px);
-    padding: 8px 20px;
-    text-align: left;
-    color: #666;
-    font-size: 12px;
-    justify-content: flex-start;
-  }
-
-  .thread-op {
-    padding: 20px 24px;
-    border-bottom: 1px solid #1e1e1e;
-    display: flex;
-    flex-direction: column;
-    gap: 8px;
-    width: 100%;
-    text-align: left;
-  }
-
-  .thread-op p { line-height: 1.6; }
-
   .meta { font-size: 11px; color: #555; }
 
+  /* Replies sit inside the active card. The seam between the OP and the replies
+     is the inline expiry bar above — no extra divider needed here. */
   .comment-list {
-    padding: 8px 0;
     width: 100%;
+    display: flex;
+    flex-direction: column;
   }
 
   .comment {
-    padding: 12px 24px 12px 40px;
-    border-bottom: 1px solid #141414;
+    padding: 10px 0 10px 24px;
     border-left: 2px solid #1e1e1e;
+    margin-left: 4px;
     display: flex;
     flex-direction: column;
     gap: 4px;
   }
+  .comment + .comment { border-top: 1px solid #141414; }
 
-  .comment p { line-height: 1.5; color: #ccc; }
+  .comment p {
+    line-height: 1.5;
+    color: #ccc;
+    font-size: 17px;
+  }
 
   .comment-compose {
+    padding-top: 12px;
+    margin-top: 4px;
     border-top: 1px solid #1e1e1e;
-    padding: 12px 24px;
     display: flex;
     gap: 8px;
     align-items: flex-end;
+    width: 100%;
+  }
+
+  /* When there are no replies yet, the expiry bar above is already the only
+     divider in the card — drop the compose's own top border so we don't get
+     two stacked separators sitting on top of each other. */
+  .comment-compose.no-divider {
+    border-top: none;
+    padding-top: 0;
+    margin-top: 0;
   }
 
   .comment-compose textarea { flex: 1; }
