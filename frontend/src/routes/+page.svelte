@@ -447,6 +447,11 @@
     outline: none;
     border-radius: 1px;
     cursor: pointer;
+    /* On touch devices (notably Android Chrome) the sliders sit inside a
+       scrollable sidebar. Without this, the browser treats a drag as a
+       scroll: the thumb moves visually but its value never sticks.
+       `touch-action: none` dedicates the drag gesture to the slider. */
+    touch-action: none;
   }
 
   input[type="range"]::-webkit-slider-thumb {
