@@ -8,7 +8,7 @@
 </script>
 
 <svelte:head>
-  <title>hlv: hablan los vecinos — blog</title>
+  <title>hlv/blog</title>
 </svelte:head>
 
 <div class="blog">

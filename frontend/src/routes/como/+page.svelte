@@ -739,7 +739,7 @@
 </script>
 
 <svelte:head>
-  <title>qhlv: cómo funciona</title>
+  <title>hlv/como</title>
 </svelte:head>
 
 <div class="page">
