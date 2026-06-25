@@ -225,6 +225,11 @@
 
 <svelte:window on:keydown={handleGlobalKey} />
 
+<!-- Browser tab title for the home page: brand mark plus tagline, so a lone tab still reads as the app. -->
+<svelte:head>
+  <title>hlv — hablan los vecinos</title>
+</svelte:head>
+
 <div class="app">
   <!-- Sidebar / controls + compose -->
   <aside>
