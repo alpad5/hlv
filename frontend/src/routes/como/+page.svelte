@@ -770,9 +770,10 @@
   <section>
     <h2>ruido gaussiano</h2>
     <p>
-      después del ajuste, se añade un desplazamiento aleatorio con
-      distribución normal — sigma ~300m por defecto. cada mensaje
-      publicado desde el mismo lugar llega a una posición diferente.
+      después del ajuste, se añade un desplazamiento aleatorio
+      (distribución normal — sigma ~300m por defecto, para los
+      interesados). cada mensaje publicado desde el mismo lugar
+      llega a una posición diferente.
     </p>
     <div class="canvas-wrap">
       <div class="glass-frame">
